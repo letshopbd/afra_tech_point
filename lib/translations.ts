@@ -16,13 +16,16 @@ export const translations = {
 
     // Dashboard
     totalInvestment: "Total Investment",
-    totalSales: "Total Sales (30 Days)",
-    estimatedProfit: "Estimated Profit (30 Days)",
+    totalSales: "Total Sales",
+    totalSales30: "Total Sales (30 Days)",
+    estimatedProfit: "Estimated Profit",
+    estimatedProfit30: "Estimated Profit (30 Days)",
     dailySalesTrend: "Daily Sales Trend",
     topSellingItems: "Top Selling Items",
     unitsSold: "units sold",
     noSalesData: "No sales data for the last 30 days.",
     revenue: "Revenue",
+    sales: "Sales",
 
     // Items Page
     addNewItem: "Add New Item",
@@ -158,13 +161,16 @@ export const translations = {
 
     // Dashboard
     totalInvestment: "মোট বিনিয়োগ",
-    totalSales: "মোট বিক্রয় (৩০ দিন)",
-    estimatedProfit: "আনুমানিক লাভ (৩০ দিন)",
+    totalSales: "মোট বিক্রয়",
+    totalSales30: "মোট বিক্রয় (৩০ দিন)",
+    estimatedProfit: "আনুমানিক লাভ",
+    estimatedProfit30: "আনুমানিক লাভ (৩০ দিন)",
     dailySalesTrend: "দৈনিক বিক্রয়ের প্রবণতা",
     topSellingItems: "সেরা বিক্রিত আইটেম",
     unitsSold: "টি বিক্রি হয়েছে",
     noSalesData: "গত ৩০ দিনের কোনো বিক্রয়ের তথ্য নেই।",
     revenue: "রাজস্ব",
+    sales: "বিক্রয়",
 
     // Items Page
     addNewItem: "নতুন আইটেম যোগ করুন",
@@ -269,9 +275,6 @@ export const translations = {
     settingsSaved: "সেটিংস সফলভাবে সংরক্ষিত হয়েছে!",
 
     // Manage Records Page
-    purchaseRecords: "ক্রয় রেকর্ড",
-    saleRecords: "বিক্রয় রেকর্ড",
-    itemsIncluded: "অন্তর্ভুক্ত আইটেম",
     totalAmount: "মোট পরিমাণ",
     saleIdInvoice: "বিক্রয় আইডি / ইনভয়েস",
     purchaseId: "ক্রয় আইডি",
@@ -287,7 +290,6 @@ export const translations = {
     print: "প্রিন্ট",
     id: "আইডি",
     name: "নাম",
-    total_short: "মোট",
     search: "অনুসন্ধান",
     paid: "পরিশোধিত",
     confirmDeleteInvoice: "আপনি কি নিশ্চিত যে আপনি এই ইনভয়েসটি মুছে ফেলতে চান? দ্রষ্টব্য: এটি বিক্রয় রেকর্ডটি মুছে ফেলে না।",
