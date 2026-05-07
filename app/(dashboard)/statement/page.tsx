@@ -97,15 +97,15 @@ export default function StatementPage() {
           <div className="dashboard-grid no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-6)' }}>
             <div className="card">
               <p className="text-muted" style={{ fontSize: '0.875rem' }}>{t('totalPurchases')}</p>
-              <h3 style={{ color: 'var(--error)' }}>৳ {data.summary.totalPurchases.toLocaleString()}</h3>
+              <h3 style={{ color: 'var(--error)' }}>৳ {(data.summary.totalPurchases || 0).toLocaleString()}</h3>
             </div>
             <div className="card">
               <p className="text-muted" style={{ fontSize: '0.875rem' }}>{t('totalSales')}</p>
-              <h3 style={{ color: 'var(--primary)' }}>৳ {data.summary.totalSales.toLocaleString()}</h3>
+              <h3 style={{ color: 'var(--primary)' }}>৳ {(data.summary.totalSales || 0).toLocaleString()}</h3>
             </div>
             <div className="card">
               <p className="text-muted" style={{ fontSize: '0.875rem' }}>{t('netProfit')}</p>
-              <h3 style={{ color: 'var(--success)' }}>৳ {data.summary.netProfit.toLocaleString()}</h3>
+              <h3 style={{ color: 'var(--success)' }}>৳ {(data.summary.netProfit || 0).toLocaleString()}</h3>
             </div>
           </div>
 
@@ -136,11 +136,11 @@ export default function StatementPage() {
               <div className="print-summary-grid" style={{ display: 'flex', gap: 'var(--space-8)' }}>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Net Sales</span>
-                  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0ea5e9' }}>৳ {data.summary.totalSales.toLocaleString()}</div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>৳ {(data.summary?.totalSales || 0).toLocaleString()}</h3>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Net Profit</span>
-                  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#22c55e' }}>৳ {data.summary.netProfit.toLocaleString()}</div>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>৳ {(data.summary?.netProfit || 0).toLocaleString()}</h3>
                 </div>
               </div>
             </div>
@@ -179,13 +179,15 @@ export default function StatementPage() {
                             <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                             <td style={{ textAlign: 'right' }}>৳{item.rate.toLocaleString()}</td>
                             <td style={{ textAlign: 'right', fontWeight: 600 }}>৳{item.total.toLocaleString()}</td>
+                            <td style={{ textAlign: 'right' }}>৳{(item.rate || 0).toLocaleString()}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600 }}>৳{(item.total || 0).toLocaleString()}</td>
                           </tr>
                         ))
                     )}
                     {data.sales.length > 0 && (
                       <tr className="total-row">
                         <td colSpan={5} style={{ textAlign: 'right', fontWeight: 700 }}>{t('total_short')} {t('saleRecords')}:</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {data.summary.totalSales.toLocaleString()}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.totalSales || 0).toLocaleString()}</td>
                       </tr>
                     )}
                   </tbody>

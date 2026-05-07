@@ -18,7 +18,7 @@ export default function DashboardClient({ data }: { data: any }) {
     <div className="card flex items-center justify-between">
       <div>
         <p className="text-muted" style={{ marginBottom: 'var(--space-1)', fontSize: '0.875rem' }}>{title}</p>
-        <h3 style={{ fontSize: '1.75rem', fontWeight: 700 }}>৳ {value.toLocaleString()}</h3>
+        <h3 style={{ fontSize: '1.75rem', fontWeight: 700 }}>৳ {(value || 0).toLocaleString()}</h3>
         {trend && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', fontSize: '0.75rem', color: trend > 0 ? 'var(--success)' : 'var(--error)' }}>
             {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
@@ -44,19 +44,19 @@ export default function DashboardClient({ data }: { data: any }) {
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-6)' }}>
         <StatCard 
           title={t('totalInvestment')} 
-          value={data.totalInvestment} 
+          value={data?.totalInvestment || 0} 
           icon={ShoppingCart} 
           color="#4f46e5" 
         />
         <StatCard 
           title={t('totalSales30')} 
-          value={data.totalSales} 
+          value={data?.totalSalesRevenue || 0} 
           icon={TrendingUp} 
           color="#0ea5e9" 
         />
         <StatCard 
           title={t('estimatedProfit30')} 
-          value={data.estimatedProfit} 
+          value={data?.estimatedProfit || 0} 
           icon={DollarSign} 
           color="#22c55e" 
         />
@@ -116,7 +116,7 @@ export default function DashboardClient({ data }: { data: any }) {
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.count} units sold</div>
                       </td>
                       <td data-label={t('sales')} style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 600 }}>৳ {item.total.toLocaleString()}</div>
+                        <div style={{ fontWeight: 600 }}>৳ {(item.total || 0).toLocaleString()}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--success)' }}>+{Math.floor(item.total * 0.1)} profit</div>
                       </td>
                     </tr>
