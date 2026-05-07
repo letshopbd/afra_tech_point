@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Item {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String?
+  cost          Decimal        @default(0.00)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+  stockLedger   StockLedger[]
+
+  @@map("items")
+}
+
+model Purchase {
+  id         Int            @id @default(autoincrement())
+  supplierId Int?           @map("supplier_id")
+  remarks    String?
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  items      PurchaseItem[]
+
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int      @map("purchase_id")
+  itemId     Int      @map("item_id")
+  quantity   Int
+  unit       String   @default("pcs")
+  rate       Decimal
+  total      Decimal
+  createdAt  DateTime @default(now()) @map("created_at")
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_items")
+}
+
+model Sale {
+  id        Int        @id @default(autoincrement())
+  customer  String?
+  remarks   String?
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  items     SaleItem[]
+  invoice   Invoice?
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id          Int      @id @default(autoincrement())
+  saleId      Int      @map("sale_id")
+  itemId      Int      @map("item_id")
+  quantity    Int
+  unit        String   @default("pcs")
+  rate        Decimal
+  total       Decimal
+  imeiNumber  String?  @map("imei_number")
+  createdAt   DateTime @default(now()) @map("created_at")
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("sale_items")
+}
+
+model StockLedger {
+  id        Int      @id @default(autoincrement())
+  itemId    Int      @map("item_id")
+  quantity  Int
+  unit      String   @default("pcs")
+  rate      Decimal  @default(0.00)
+  type      Int
+  refType   String   @map("ref_type")
+  refId     Int      @map("ref_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("stock_ledger")
+}
+
+model Invoice {
+  id                    Int      @id @default(autoincrement())
+  invoiceNumber         String   @unique @map("invoice_number")
+  saleId                Int      @unique @map("sale_id")
+  customerName          String?  @map("customer_name")
+  customerPhone         String?  @map("customer_phone")
+  customerAddress       String?  @map("customer_address")
+  subtotal              Decimal  @default(0.00)
+  taxAmount             Decimal  @map("tax_amount") @default(0.00)
+  discountAmount        Decimal  @map("discount_amount") @default(0.00)
+  totalAmount           Decimal  @map("total_amount") @default(0.00)
+  paymentStatus         String?  @map("payment_status") @default("pending")
+  paymentMethod         String?  @map("payment_method")
+  notes                 String?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  sale                  Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+model Settings {
+  id                     Int      @id @default(autoincrement())
+  adminName              String?  @map("admin_name")
+  adminPhone             String?  @map("admin_phone")
+  adminEmail             String?  @map("admin_email")
+  companyName            String?  @map("company_name")
+  companyAddress         String?  @map("company_address")
+  currency               String?  @default("৳")
+  invoiceCompanyName     String?  @map("invoice_company_name") @default("OnPoint Gadget")
+  invoiceCompanyAddress  String?  @map("invoice_company_address") @default("Mohila Collage Gate, Dhunat, Bogura")
+  invoicePhone           String?  @map("invoice_phone") @default("017044996944")
+  invoiceLogo            String?  @map("invoice_logo")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
