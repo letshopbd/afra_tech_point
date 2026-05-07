@@ -97,7 +97,7 @@ export default function DashboardClient({ data }: { data: any }) {
         {/* Top Selling Items */}
         <div className="card">
           <h3 style={{ marginBottom: 'var(--space-6)' }}>{t('topSellingItems')}</h3>
-          {data.topItems.length === 0 ? (
+          {(data?.topItems?.length || 0) === 0 ? (
             <p className="text-muted">No sales data yet.</p>
           ) : (
             <div className="table-container">

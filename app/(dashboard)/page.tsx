@@ -7,38 +7,21 @@ async function getDashboardData() {
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  // 1. Total Investment
-  const stockIn = await prisma.stockLedger.groupBy({
-    by: ['itemId'],
-    _sum: { quantity: true },
-    where: { type: 1 }
-  })
-  
-  const stockOut = await prisma.stockLedger.groupBy({
-    by: ['itemId'],
-    _sum: { quantity: true },
-    where: { type: 2 }
-  })
+  // Run all independent queries in parallel
+  const [stockIn, stockOut, itemCosts, recentSalesItems] = await Promise.all([
+    prisma.stockLedger.groupBy({ by: ['itemId'], _sum: { quantity: true }, where: { type: 1 } }),
+    prisma.stockLedger.groupBy({ by: ['itemId'], _sum: { quantity: true }, where: { type: 2 } }),
+    prisma.item.findMany({ select: { id: true, cost: true, name: true } }),
+    prisma.saleItem.findMany({ where: { createdAt: { gte: thirtyDaysAgo } }, include: { item: true } })
+  ])
 
   const inMap = new Map(stockIn.map(s => [s.itemId, s._sum.quantity || 0]))
   const outMap = new Map(stockOut.map(s => [s.itemId, s._sum.quantity || 0]))
 
-  const itemCosts = await prisma.item.findMany({
-    select: { id: true, cost: true, name: true }
-  })
-
   let totalInvestment = 0
   itemCosts.forEach(item => {
     const balance = (inMap.get(item.id) || 0) - (outMap.get(item.id) || 0)
-    if (balance > 0) {
-      totalInvestment += balance * Number(item.cost)
-    }
-  })
-
-  // 2. Total Sales & 3. Estimated Profit
-  const recentSalesItems = await prisma.saleItem.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } },
-    include: { item: true }
+    if (balance > 0) totalInvestment += balance * Number(item.cost)
   })
 
   const itemSalesMap = new Map()
@@ -51,20 +34,15 @@ async function getDashboardData() {
     current.revenue += Number(si.total)
     current.cost += si.quantity * Number(si.item.cost)
     itemSalesMap.set(si.itemId, current)
-    
     totalSalesRevenue += Number(si.total)
     estimatedProfit += (Number(si.total) - (si.quantity * Number(si.item.cost)))
   })
 
   const topItems = Array.from(itemSalesMap.values())
-    .map(data => ({ 
-      ...data, 
-      profit: data.revenue - data.cost 
-    }))
+    .map(data => ({ ...data, profit: data.revenue - data.cost }))
     .sort((a, b) => (b as any).qty - (a as any).qty)
     .slice(0, 5)
 
-  // 4. Daily Sales Trend
   const salesByDay = new Map()
   recentSalesItems.forEach(si => {
     const dateStr = si.createdAt.toISOString().split('T')[0]
@@ -76,19 +54,10 @@ async function getDashboardData() {
     const d = new Date()
     d.setDate(d.getDate() - i)
     const dateStr = d.toISOString().split('T')[0]
-    chartData.push({
-      date: dateStr,
-      amount: salesByDay.get(dateStr) || 0
-    })
+    chartData.push({ date: dateStr, amount: salesByDay.get(dateStr) || 0 })
   }
 
-  return {
-    totalInvestment,
-    totalSalesRevenue,
-    estimatedProfit,
-    topItems,
-    chartData
-  }
+  return { totalInvestment, totalSalesRevenue, estimatedProfit, topItems, chartData }
 }
 
 export default async function DashboardPage() {
