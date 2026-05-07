@@ -32,12 +32,15 @@ export default function InvoicesPage() {
 
     try {
       const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete")
-      
+      const result = await res.json()
+      if (!res.ok) {
+        toast.error(result.error || "Failed to delete")
+        return
+      }
       toast.success("Invoice deleted")
       fetchInvoices()
-    } catch (error) {
-      toast.error("Error deleting invoice")
+    } catch (error: any) {
+      toast.error(error.message || "Error deleting invoice")
     }
   }
 
