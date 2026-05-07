@@ -26,26 +26,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedParams = await params
-    const id = parseInt(resolvedParams.id)
+    const { id: itemId } = await params
+    const id = parseInt(itemId)
     
-    console.log(`Attempting to delete item with ID: ${id}`);
-    
-    const deletedItem = await prisma.item.delete({
-      where: { id }
-    })
-    
-    console.log(`Successfully deleted item: ${deletedItem.id}`);
-    
-    return NextResponse.json({ success: true, id: deletedItem.id })
+    await prisma.item.delete({ where: { id } })
+    return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error("Error deleting item:", error)
-    // If it's a Prisma error P2003 (Foreign key constraint failed)
     if (error.code === 'P2003') {
-      return NextResponse.json({ 
-        error: "Cannot delete item because it is used in sales or purchases. Delete those records first." 
-      }, { status: 400 })
+      return NextResponse.json({ error: "Cannot delete item. Delete associated records first." }, { status: 400 })
     }
-    return NextResponse.json({ error: `Server Error: ${error.message || 'Unknown error'}` }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
