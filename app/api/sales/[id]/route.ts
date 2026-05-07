@@ -3,35 +3,17 @@ import { prisma } from "@/lib/prisma"
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedParams = await params
-    const id = parseInt(resolvedParams.id)
+    const { id: saleId } = await params
+    const id = parseInt(saleId)
     
-    console.log(`Attempting to delete sale with ID: ${id}`);
-    
-    await prisma.$transaction(async (tx) => {
-      // 1. Delete stock ledger entries
-      await tx.stockLedger.deleteMany({
-        where: { 
-          refId: id,
-          refType: { in: ['sale', 'SALE'] }
-        }
-      })
-      
-      // 2. Delete invoice associated with sale
-      await tx.invoice.deleteMany({
-        where: { saleId: id }
-      })
-      
-      // 3. Delete sale
-      await tx.sale.delete({
-        where: { id }
-      })
-    })
+    await prisma.$transaction([
+      prisma.stockLedger.deleteMany({ where: { refId: id, refType: { in: ['sale', 'SALE'] } } }),
+      prisma.invoice.deleteMany({ where: { saleId: id } }),
+      prisma.sale.delete({ where: { id } })
+    ])
 
-    console.log(`Successfully deleted sale: ${id}`);
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error("Error deleting sale:", error)
-    return NextResponse.json({ error: `Server Error: ${error.message || 'Unknown error'}` }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
