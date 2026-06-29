@@ -53,8 +53,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     ])
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete Error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 }

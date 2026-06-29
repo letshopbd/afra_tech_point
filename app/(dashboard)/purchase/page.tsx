@@ -1,32 +1,139 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "sonner"
 import { Trash2, Plus, Save } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
 export default function PurchasePage() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [items, setItems] = useState<any[]>([])
-  const [purchaseRows, setPurchaseRows] = useState<any[]>([
-    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0 }
+  const [purchaseRows, setPurchaseRows] = useState<any[]>(() => [
+    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, price: 0, total: 0 }
   ])
   const [remarks, setRemarks] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetchItems()
-  }, [])
+  const [barcodeInput, setBarcodeInput] = useState("")
+  const barcodeInputRef = useRef<HTMLInputElement>(null)
+  const barcodeBuffer = useRef("")
+  const scanTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const itemsRef = useRef(items)
+  itemsRef.current = items
 
-  const fetchItems = async () => {
+  async function fetchItems() {
     try {
-      const res = await fetch("/api/items")
+      const res = await fetch("/api/items?type=product")
       const data = await res.json()
-      setItems(data)
-    } catch (error) {
+      setTimeout(() => setItems(data), 0)
+    } catch {
       toast.error("Failed to fetch items")
     }
   }
+
+  useEffect(() => {
+    fetchItems()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Poll 3rd party scanner app input
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const appRes = await fetch("/api/scan/pending")
+        if (appRes.ok) {
+          const appData = await appRes.json()
+          if (appData.barcodes && appData.barcodes.length > 0) {
+            appData.barcodes.forEach((code: string) => {
+              triggerBarcodeMatch(code.trim())
+            })
+          }
+        }
+      } catch {}
+    }, 1200)
+
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items])
+
+  const triggerBarcodeMatch = useCallback((code: string) => {
+    if (!code) return
+    const cleanedCode = code.trim()
+    const matchedItem = itemsRef.current.find(item => item.barcode === cleanedCode)
+    if (!matchedItem) {
+      toast.error("No item found with this barcode")
+      setBarcodeInput("")
+      return
+    }
+
+    setPurchaseRows(prev => {
+      const existingRowIdx = prev.findIndex(row => row.itemId === String(matchedItem.id))
+      if (existingRowIdx > -1) {
+        const updated = [...prev]
+        updated[existingRowIdx].quantity += 1
+        updated[existingRowIdx].total = updated[existingRowIdx].quantity * updated[existingRowIdx].rate
+        return updated
+      } else {
+        const newRow = {
+          id: Date.now(),
+          itemId: String(matchedItem.id),
+          quantity: 1,
+          unit: "pcs",
+          rate: Number(matchedItem.cost) || 0,
+          price: Number(matchedItem.price) || 0,
+          total: Number(matchedItem.cost) || 0
+        }
+
+        if (prev.length === 1 && prev[0].itemId === "") {
+          return [newRow]
+        }
+        return [...prev, newRow]
+      }
+    })
+
+    toast.success(`Added ${matchedItem.name}`)
+    setBarcodeInput("")
+  }, [t])
+
+  // Global barcode scanner listener — auto-adds item on scan
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+
+      if (e.key === "Enter") {
+        const buf = barcodeBuffer.current
+        barcodeBuffer.current = ""
+        if (buf.length >= 3) {
+          e.preventDefault()
+          e.stopPropagation()
+          const el = document.activeElement as HTMLInputElement | null
+          if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+            const nativeSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype, "value"
+            )?.set
+            nativeSetter?.call(el, "")
+            el.dispatchEvent(new Event("input", { bubbles: true }))
+          }
+          triggerBarcodeMatch(buf)
+        }
+        return
+      }
+
+      if (e.key && e.key.length === 1) {
+        clearTimeout(scanTimer.current)
+        scanTimer.current = setTimeout(() => { barcodeBuffer.current = "" }, 50)
+        barcodeBuffer.current += e.key
+      }
+    }
+
+    document.addEventListener("keydown", handler)
+    return () => {
+      document.removeEventListener("keydown", handler)
+      clearTimeout(scanTimer.current)
+    }
+  }, [triggerBarcodeMatch])
+
+
 
   const handleRowChange = (id: number, field: string, value: any) => {
     setPurchaseRows(prev => prev.map(row => {
@@ -37,6 +144,7 @@ export default function PurchasePage() {
           const selectedItem = items.find(i => i.id === parseInt(value))
           if (selectedItem) {
             newRow.rate = Number(selectedItem.cost)
+            newRow.price = Number(selectedItem.price) || 0
           }
         }
         
@@ -55,7 +163,7 @@ export default function PurchasePage() {
   const addRow = () => {
     setPurchaseRows([
       ...purchaseRows,
-      { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0 }
+      { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, price: 0, total: 0 }
     ])
   }
 
@@ -90,9 +198,9 @@ export default function PurchasePage() {
       
       toast.success("Purchase saved successfully!")
       
-      setPurchaseRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0 }])
+      setPurchaseRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, price: 0, total: 0 }])
       setRemarks("")
-    } catch (error) {
+    } catch {
       toast.error("Error saving purchase")
     } finally {
       setIsSubmitting(false)
@@ -109,6 +217,34 @@ export default function PurchasePage() {
           </button>
         </div>
 
+        {/* Barcode scan box */}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', maxWidth: '600px', alignItems: 'center' }}>
+          <div style={{ flex: 1 }}>
+            <input 
+              ref={barcodeInputRef}
+              type="text"
+              placeholder={language === 'bn' ? "বারকোড স্ক্যান করুন..." : "Scan Barcode..."}
+              className="input-field"
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  triggerBarcodeMatch(barcodeInput)
+                }
+              }}
+            />
+          </div>
+          <button 
+            type="button" 
+            onClick={() => triggerBarcodeMatch(barcodeInput)}
+            className="btn btn-primary"
+            style={{ padding: '8px 16px' }}
+          >
+            Add
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className="table-container">
             <table className="table mobile-card-table">
@@ -118,6 +254,7 @@ export default function PurchasePage() {
                   <th style={{ width: '100px' }}>{t('qty')}</th>
                   <th style={{ width: '100px' }}>Unit</th>
                   <th style={{ width: '150px' }}>{t('rate')} (৳)</th>
+                  <th style={{ width: '150px' }}>Sale Price (৳)</th>
                   <th style={{ width: '150px' }}>{t('total')} (৳)</th>
                   <th style={{ width: '50px' }}></th>
                 </tr>
@@ -166,6 +303,18 @@ export default function PurchasePage() {
                         value={row.rate}
                         onChange={(e) => handleRowChange(row.id, 'rate', Number(e.target.value))}
                         onFocus={(e) => e.target.select()}
+                        required
+                      />
+                    </td>
+                    <td data-label="Sale Price (৳)">
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        className="input-field" 
+                        value={row.price || ""}
+                        onChange={(e) => handleRowChange(row.id, 'price', Number(e.target.value))}
+                        onFocus={(e) => e.target.select()}
+                        placeholder="0.00"
                         required
                       />
                     </td>

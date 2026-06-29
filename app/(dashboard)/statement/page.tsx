@@ -18,19 +18,21 @@ export default function StatementPage() {
   const [data, setData] = useState<any>(null)
   const [settings, setSettings] = useState<any>(null)
 
-  useEffect(() => {
-    fetchSettings()
-  }, [])
-
-  const fetchSettings = async () => {
+  async function fetchSettings() {
     try {
       const res = await fetch("/api/settings")
       const data = await res.json()
       setSettings(data)
-    } catch (error) {
+    } catch {
       console.error("Failed to fetch settings")
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchSettings()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,7 +41,7 @@ export default function StatementPage() {
       const res = await fetch(`/api/statement?start=${startDate}&end=${endDate}`)
       const result = await res.json()
       setData(result)
-    } catch (error) {
+    } catch {
       toast.error("Failed to generate statement")
     } finally {
       setLoading(false)
@@ -114,11 +116,14 @@ export default function StatementPage() {
             
             {/* Elegant Header - ONLY PRINT */}
             <div className="only-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #334155', paddingBottom: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
-              <div>
-                <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{settings?.invoiceCompanyName || settings?.companyName || "Business Name"}</h1>
-                <p style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b', maxWidth: '400px' }}>{settings?.invoiceCompanyAddress || settings?.companyAddress}</p>
-                <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-1)', fontSize: '0.8rem', fontWeight: 600 }}>
-                  <span>Phone: {settings?.invoicePhone || settings?.adminPhone}</span>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                <img src="/logo.png" alt="Logo" style={{ height: '48px', width: '48px', objectFit: 'contain' }} />
+                <div>
+                  <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{settings?.invoiceCompanyName || settings?.companyName || "Business Name"}</h1>
+                  <p style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b', maxWidth: '400px' }}>{settings?.invoiceCompanyAddress || settings?.companyAddress}</p>
+                  <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-1)', fontSize: '0.8rem', fontWeight: 600 }}>
+                    <span>Phone: {settings?.invoicePhone || settings?.adminPhone}</span>
+                  </div>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -177,8 +182,6 @@ export default function StatementPage() {
                             ) : null}
                             <td>{item.name}</td>
                             <td style={{ textAlign: 'center' }}>{item.quantity}</td>
-                            <td style={{ textAlign: 'right' }}>৳{item.rate.toLocaleString()}</td>
-                            <td style={{ textAlign: 'right', fontWeight: 600 }}>৳{item.total.toLocaleString()}</td>
                             <td style={{ textAlign: 'right' }}>৳{(item.rate || 0).toLocaleString()}</td>
                             <td style={{ textAlign: 'right', fontWeight: 600 }}>৳{(item.total || 0).toLocaleString()}</td>
                           </tr>

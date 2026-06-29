@@ -15,6 +15,24 @@ const BLOCK_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 export function checkRateLimit(ip: string): { allowed: boolean; remaining: number; reset: number } {
   const now = Date.now();
+  
+  if (process.env.DISABLE_RATE_LIMIT === "true") {
+    return { allowed: true, remaining: MAX_ATTEMPTS, reset: 0 };
+  }
+  
+  // Bypass rate limits for local area networks and loopback ONLY in development
+  if (
+    process.env.NODE_ENV !== "production" &&
+    (ip.startsWith("192.168.") || 
+     ip.startsWith("10.") || 
+     ip.startsWith("172.") || 
+     ip === "127.0.0.1" || 
+     ip === "::1" || 
+     ip === "::ffff:127.0.0.1")
+  ) {
+    return { allowed: true, remaining: MAX_ATTEMPTS, reset: 0 };
+  }
+
   const data = cache.get(ip);
 
   if (!data) {

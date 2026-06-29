@@ -44,9 +44,14 @@ async function getDashboardData() {
     .slice(0, 5)
 
   const salesByDay = new Map()
+  const profitByDay = new Map()
+
   recentSalesItems.forEach(si => {
     const dateStr = si.createdAt.toISOString().split('T')[0]
     salesByDay.set(dateStr, (salesByDay.get(dateStr) || 0) + Number(si.total))
+    
+    const profit = Number(si.total) - (si.quantity * Number(si.item.cost))
+    profitByDay.set(dateStr, (profitByDay.get(dateStr) || 0) + profit)
   })
 
   const chartData = []
@@ -54,7 +59,13 @@ async function getDashboardData() {
     const d = new Date()
     d.setDate(d.getDate() - i)
     const dateStr = d.toISOString().split('T')[0]
-    chartData.push({ date: dateStr, amount: salesByDay.get(dateStr) || 0 })
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    
+    chartData.push({ 
+      name: label, 
+      sales: salesByDay.get(dateStr) || 0,
+      profit: profitByDay.get(dateStr) || 0
+    })
   }
 
   return { totalInvestment, totalSalesRevenue, estimatedProfit, topItems, chartData }

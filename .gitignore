@@ -43,3 +43,9 @@ next-env.d.ts
 /app/generated/prisma
 *.db
 *.db-journal
+
+# logs and temporary reports
+*.log
+*report.txt
+*output*.txt
+

@@ -1,158 +1,43 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Trash2, Plus, Save, FileText } from "lucide-react"
+import { Trash2, Plus, Save, FileText, Wrench } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
-export default function SalePage() {
+export default function ServiceJobPage() {
   const { t, language } = useLanguage()
-  const [stockItems, setStockItems] = useState<any[]>([])
+  const [serviceItems, setServiceItems] = useState<any[]>([])
   const [saleRows, setSaleRows] = useState<any[]>(() => [
-    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0, isService: false }
+    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0 }
   ])
   
   const [customer, setCustomer] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
+  const [deviceModel, setDeviceModel] = useState("")
+  const [problemDesc, setProblemDesc] = useState("")
+  const [remarks, setRemarks] = useState("")
+  
   const [discount, setDiscount] = useState(0)
   const [tax, setTax] = useState(0)
-  const [remarks, setRemarks] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [generatedInvoiceId, setGeneratedInvoiceId] = useState<number | null>(null)
 
-  const [barcodeInput, setBarcodeInput] = useState("")
-  const barcodeInputRef = useRef<HTMLInputElement>(null)
-  const barcodeBuffer = useRef("")
-  const scanTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const stockItemsRef = useRef(stockItems)
-  stockItemsRef.current = stockItems
-
-  async function fetchStock() {
+  async function fetchServices() {
     try {
-      const res = await fetch("/api/items")
+      const res = await fetch("/api/items?type=service")
       const data = await res.json()
-      // Show products with stock > 0 and all services (which don't track stock but are sellable)
-      const filtered = data.filter((item: any) => item.itemType === 'service' || item.stock > 0)
-      setTimeout(() => setStockItems(filtered), 0)
+      setTimeout(() => setServiceItems(data), 0)
     } catch {
-      toast.error("Failed to fetch stock items")
+      toast.error("Failed to fetch service list")
     }
   }
 
   useEffect(() => {
-    fetchStock()
+    fetchServices()
   }, [])
-
-  // Poll 3rd party scanner app input
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const appRes = await fetch("/api/scan/pending")
-        if (appRes.ok) {
-          const appData = await appRes.json()
-          if (appData.barcodes && appData.barcodes.length > 0) {
-            appData.barcodes.forEach((code: string) => {
-              triggerBarcodeMatch(code.trim())
-            })
-          }
-        }
-      } catch {}
-    }, 1200)
-
-    return () => clearInterval(interval)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stockItems])
-
-  const triggerBarcodeMatch = useCallback((code: string) => {
-    if (!code) return
-    const cleanedCode = code.trim()
-    const matchedItem = stockItemsRef.current.find(item => item.barcode === cleanedCode)
-    if (!matchedItem) {
-      toast.error("No item found with this barcode")
-      setBarcodeInput("")
-      return
-    }
-
-    setSaleRows(prev => {
-      const existingRowIdx = prev.findIndex(row => row.itemId === String(matchedItem.id))
-      if (existingRowIdx > -1) {
-        const updated = [...prev]
-        const isService = matchedItem.itemType === 'service'
-        const maxStock = isService ? 999999 : matchedItem.stock
-        
-        if (!isService && updated[existingRowIdx].quantity >= maxStock) {
-          toast.error(`${t('availableStock')}: ${maxStock}`)
-          return prev
-        }
-        
-        updated[existingRowIdx].quantity += 1
-        updated[existingRowIdx].total = updated[existingRowIdx].quantity * updated[existingRowIdx].rate
-        return updated
-      } else {
-        const isService = matchedItem.itemType === 'service'
-        const newRow = {
-          id: Date.now(),
-          itemId: String(matchedItem.id),
-          quantity: 1,
-          unit: "pcs",
-          rate: Number(matchedItem.price) || 0,
-          total: Number(matchedItem.price) || 0,
-          imeiNumber: "",
-          maxStock: isService ? 999999 : matchedItem.stock,
-          isService
-        }
-
-        if (prev.length === 1 && prev[0].itemId === "") {
-          return [newRow]
-        }
-        return [...prev, newRow]
-      }
-    })
-
-    toast.success(`Added ${matchedItem.name}`)
-    setBarcodeInput("")
-  }, [t])
-
-  // Global barcode scanner listener — auto-adds item on scan in sale page
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return
-
-      if (e.key === "Enter") {
-        const buf = barcodeBuffer.current
-        barcodeBuffer.current = ""
-        if (buf.length >= 3) {
-          e.preventDefault()
-          e.stopPropagation()
-          const el = document.activeElement as HTMLInputElement | null
-          if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
-            const nativeSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLInputElement.prototype, "value"
-            )?.set
-            nativeSetter?.call(el, "")
-            el.dispatchEvent(new Event("input", { bubbles: true }))
-          }
-          triggerBarcodeMatch(buf)
-        }
-        return
-      }
-
-      if (e.key && e.key.length === 1) {
-        clearTimeout(scanTimer.current)
-        scanTimer.current = setTimeout(() => { barcodeBuffer.current = "" }, 50)
-        barcodeBuffer.current += e.key
-      }
-    }
-
-    document.addEventListener("keydown", handler)
-    return () => {
-      document.removeEventListener("keydown", handler)
-      clearTimeout(scanTimer.current)
-    }
-  }, [triggerBarcodeMatch])
-
-
 
   const handleRowChange = (id: number, field: string, value: any) => {
     setSaleRows(prev => prev.map(row => {
@@ -160,21 +45,10 @@ export default function SalePage() {
         const newRow = { ...row, [field]: value }
         
         if (field === 'itemId' && value) {
-          const selectedItem = stockItems.find(i => i.id === parseInt(value))
+          const selectedItem = serviceItems.find(i => i.id === parseInt(value))
           if (selectedItem) {
-            const isService = selectedItem.itemType === 'service'
-            newRow.isService = isService
-            newRow.maxStock = isService ? 999999 : selectedItem.stock
-            newRow.rate = Number(selectedItem.price) || 0 // Auto-fill retail price
-            if (!isService && newRow.quantity > selectedItem.stock) {
-              newRow.quantity = selectedItem.stock
-            }
+            newRow.rate = Number(selectedItem.price) || 0
           }
-        }
-        
-        if (field === 'quantity' && !newRow.isService && newRow.maxStock > 0 && value > newRow.maxStock) {
-          toast.error(`${t('availableStock')}: ${newRow.maxStock}`)
-          newRow.quantity = newRow.maxStock
         }
         
         if (field === 'quantity' || field === 'rate' || field === 'itemId') {
@@ -190,7 +64,7 @@ export default function SalePage() {
   const addRow = () => {
     setSaleRows([
       ...saleRows,
-      { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0, isService: false }
+      { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0 }
     ])
   }
 
@@ -208,10 +82,13 @@ export default function SalePage() {
     if (!customer) {
       return toast.error("Customer name is required")
     }
+    if (!deviceModel) {
+      return toast.error("Device Brand & Model is required")
+    }
 
     const validRows = saleRows.filter(r => r.itemId && r.quantity > 0)
     if (validRows.length === 0) {
-      return toast.error("Please add at least one valid item")
+      return toast.error("Please select at least one service type")
     }
 
     setIsSubmitting(true)
@@ -227,33 +104,39 @@ export default function SalePage() {
           remarks,
           discountAmount: discount,
           taxAmount: tax,
-          items: validRows
+          items: validRows,
+          isServiceJob: true,
+          deviceModel,
+          problemDesc,
+          serviceStatus: "pending"
         })
       })
 
-      if (!res.ok) throw new Error("Failed to save sale")
+      if (!res.ok) throw new Error("Failed to save service job")
       
       const result = await res.json()
-      toast.success(t('saleSaved'))
+      toast.success("Service job saved successfully!")
       setGeneratedInvoiceId(result.invoice.id)
       
-    } catch (error) {
-      toast.error("Error saving sale")
+    } catch {
+      toast.error("Error saving service job")
       setIsSubmitting(false)
     }
   }
 
-  const startNewSale = () => {
+  const startNewJob = () => {
     setGeneratedInvoiceId(null)
     setCustomer("")
     setCustomerPhone("")
     setCustomerAddress("")
+    setDeviceModel("")
+    setProblemDesc("")
     setRemarks("")
     setDiscount(0)
     setTax(0)
-    setSaleRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0 }])
+    setSaleRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0 }])
     setIsSubmitting(false)
-    fetchStock()
+    fetchServices()
   }
 
   if (generatedInvoiceId) {
@@ -262,18 +145,18 @@ export default function SalePage() {
         <div style={{ background: 'var(--success)', color: 'white', padding: 'var(--space-4)', borderRadius: '50%' }}>
           <Save size={48} />
         </div>
-        <h2>{t('saleSaved')}</h2>
-        <p className="text-muted">Invoice generated.</p>
+        <h2>Service Job Saved!</h2>
+        <p className="text-muted">Job ticket and invoice generated successfully.</p>
         
         <div className="sale-success-actions" style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
           <button 
             className="btn btn-primary" 
             onClick={() => window.open(`/invoices/${generatedInvoiceId}`, '_blank')}
           >
-            <FileText size={18} /> {t('viewPrint')}
+            <FileText size={18} /> {t('viewPrint') || "Print Invoice"}
           </button>
-          <button className="btn" style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)' }} onClick={startNewSale}>
-            <Plus size={18} /> {t('startNew')}
+          <button className="btn" style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)' }} onClick={startNewJob}>
+            <Plus size={18} /> Add New Job
           </button>
         </div>
       </div>
@@ -283,16 +166,21 @@ export default function SalePage() {
   return (
     <div className="flex-col gap-6" style={{ display: 'flex' }}>
       <form onSubmit={handleSubmit}>
-        {/* Customer Details Card */}
+        
+        {/* Customer & Device Details Card */}
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-          <h3 style={{ marginBottom: 'var(--space-4)' }}>{t('customerDetails')}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--space-4)' }}>
+          <h3 style={{ marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Wrench size={20} color="var(--primary)" />
+            {language === 'bn' ? "কাস্টমার ও ডিভাইস বিবরণী" : "Customer & Device Details"}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-4)' }}>
             <div>
               <label className="form-label">{t('customerName')} *</label>
               <input 
                 className="input-field" 
                 value={customer} 
                 onChange={(e) => setCustomer(e.target.value)} 
+                placeholder="e.g. Rahim Uddin"
                 required 
               />
             </div>
@@ -301,7 +189,28 @@ export default function SalePage() {
               <input 
                 className="input-field" 
                 value={customerPhone} 
+                placeholder="017xxxxxxxx"
                 onChange={(e) => setCustomerPhone(e.target.value)} 
+              />
+            </div>
+            <div>
+              <label className="form-label">{language === 'bn' ? "ডিভাইস মডেল (ব্র্যান্ড সহ) *" : "Device Brand & Model *"}</label>
+              <input 
+                className="input-field" 
+                value={deviceModel} 
+                onChange={(e) => setDeviceModel(e.target.value)} 
+                placeholder="e.g. HP Pavilion 15 / iPhone 12"
+                required 
+              />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">{language === 'bn' ? "সমস্যার বিবরণ *" : "Problem Description *"}</label>
+              <input 
+                className="input-field" 
+                value={problemDesc} 
+                onChange={(e) => setProblemDesc(e.target.value)} 
+                placeholder="e.g. Keyboard not working / Charging port damage / OS Install"
+                required 
               />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
@@ -309,46 +218,19 @@ export default function SalePage() {
               <input 
                 className="input-field" 
                 value={customerAddress} 
+                placeholder="Customer Address"
                 onChange={(e) => setCustomerAddress(e.target.value)} 
               />
             </div>
           </div>
         </div>
 
-        {/* Items Card */}
+        {/* Billing Card */}
         <div className="card">
           <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
-            <h3>{t('saleItems')}</h3>
+            <h3>{language === 'bn' ? "সার্ভিস চার্জ ও বিল" : "Service Charges & Billing"}</h3>
             <button type="button" onClick={addRow} className="btn" style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)' }}>
-              <Plus size={16} /> {t('addRow')}
-            </button>
-          </div>
-
-          {/* Barcode scan box */}
-          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', maxWidth: '600px', alignItems: 'center' }}>
-            <div style={{ flex: 1 }}>
-              <input 
-                ref={barcodeInputRef}
-                type="text"
-                placeholder={language === 'bn' ? "বারকোড স্ক্যান করুন..." : "Scan Barcode..."}
-                className="input-field"
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    triggerBarcodeMatch(barcodeInput)
-                  }
-                }}
-              />
-            </div>
-            <button 
-              type="button" 
-              onClick={() => triggerBarcodeMatch(barcodeInput)}
-              className="btn btn-primary"
-              style={{ padding: '8px 16px' }}
-            >
-              Add
+              <Plus size={16} /> Add Charge Item
             </button>
           </div>
 
@@ -356,8 +238,7 @@ export default function SalePage() {
             <table className="table mobile-card-table">
               <thead>
                 <tr>
-                  <th>{t('items')} ({t('availableStock')})</th>
-                  <th style={{ width: '180px' }}>{t('imeiSerial')}</th>
+                  <th>{language === 'bn' ? "সার্ভিস টাইপ" : "Service Type"}</th>
                   <th style={{ width: '100px' }}>{t('qty')}</th>
                   <th style={{ width: '150px' }}>{t('rate')} (৳)</th>
                   <th style={{ width: '150px' }}>{t('total')} (৳)</th>
@@ -367,37 +248,26 @@ export default function SalePage() {
               <tbody>
                 {saleRows.map((row) => (
                   <tr key={row.id}>
-                    <td data-label={t('items')}>
+                    <td data-label="Service Type">
                       <select 
                         className="input-field" 
                         value={row.itemId}
                         onChange={(e) => handleRowChange(row.id, 'itemId', e.target.value)}
                         required
                       >
-                        <option value="">{t('selectItem')}</option>
-                        {stockItems.map(item => (
+                        <option value="">{language === 'bn' ? "সার্ভিস সিলেক্ট করুন" : "Select Service Type"}</option>
+                        {serviceItems.map(item => (
                           <option key={item.id} value={item.id}>
-                            {item.name} ({t('availableStock')}: {item.stock || 0})
+                            {item.name} (Rate: ৳{item.price})
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td data-label={t('imeiSerial')}>
-                      <input 
-                        type="text" 
-                        className="input-field" 
-                        value={row.imeiNumber}
-                        onChange={(e) => handleRowChange(row.id, 'imeiNumber', e.target.value)}
-                        placeholder={t('imeiSerial')}
-                        onFocus={(e) => e.target.select()}
-                      />
                     </td>
                     <td data-label={t('qty')}>
                       <input 
                         type="number" 
                         className="input-field" 
                         min="1"
-                        max={row.maxStock > 0 ? row.maxStock : undefined}
                         value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', Number(e.target.value))}
                         onFocus={(e) => e.target.select()}
@@ -444,6 +314,7 @@ export default function SalePage() {
                 rows={4} 
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Additional notes about repair/diagnosis..."
               />
             </div>
 
@@ -489,7 +360,7 @@ export default function SalePage() {
               </div>
               
               <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ marginTop: 'var(--space-2)', padding: 'var(--space-4)', width: '100%' }}>
-                {isSubmitting ? t('processing') : <><Save size={18} /> {t('completeSale')}</>}
+                {isSubmitting ? t('processing') : <><Save size={18} /> Complete & Save Job</>}
               </button>
             </div>
           </div>

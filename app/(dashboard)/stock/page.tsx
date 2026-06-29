@@ -5,26 +5,35 @@ import { toast } from "sonner"
 import { Package, CheckCircle, AlertTriangle, XCircle } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
+interface StockItem {
+  id: number
+  name: string
+  stockIn: number
+  stockOut: number
+  balance: number
+}
+
 export default function StockPage() {
   const { t } = useLanguage()
-  const [stockData, setStockData] = useState<any[]>([])
+  const [stockData, setStockData] = useState<StockItem[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchStock()
-  }, [])
-
-  const fetchStock = async () => {
+  async function fetchStock() {
     try {
       const res = await fetch("/api/stock")
       const data = await res.json()
       setStockData(data)
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch stock data")
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStock()
+  }, [])
 
   const totalItems = stockData.length
   const inStockCount = stockData.filter(item => item.balance > 5).length

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Search, Printer, Eye, Trash2 } from "lucide-react"
+import { Search, Printer, Trash2 } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
 export default function InvoicesPage() {
@@ -11,21 +11,29 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
 
-  useEffect(() => {
-    fetchInvoices()
-  }, [])
-
-  const fetchInvoices = async () => {
+  async function fetchInvoices() {
     try {
       const res = await fetch("/api/invoices")
       const data = await res.json()
-      setInvoices(data)
-    } catch (error) {
+      if (Array.isArray(data)) {
+        setInvoices(data)
+      } else {
+        setInvoices([])
+        toast.error(data.error || "Failed to fetch invoices")
+      }
+    } catch {
       toast.error("Failed to fetch invoices")
+      setInvoices([])
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchInvoices()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this invoice? This will remove the sale record and revert stock levels.")) return
@@ -39,15 +47,15 @@ export default function InvoicesPage() {
       }
       toast.success("Invoice deleted")
       fetchInvoices()
-    } catch (error: any) {
-      toast.error(error.message || "Error deleting invoice")
+    } catch (error) {
+      toast.error((error as Error).message || "Error deleting invoice")
     }
   }
 
-  const filteredInvoices = invoices.filter(inv => 
+  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(inv => 
     inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (inv.customerName && inv.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  ) : []
 
   return (
     <div className="flex-col gap-6" style={{ display: 'flex' }}>

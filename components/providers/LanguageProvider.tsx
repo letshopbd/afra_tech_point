@@ -17,7 +17,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     const savedLang = localStorage.getItem('app-language') as Language;
     if (savedLang && (savedLang === 'en' || savedLang === 'bn')) {
-      setLanguageState(savedLang);
+      setTimeout(() => setLanguageState(savedLang), 0);
     }
   }, []);
 

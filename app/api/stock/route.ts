@@ -27,10 +27,11 @@ export async function GET() {
     const outMap = new Map(stockOut.map(s => [s.itemId, s._sum.quantity || 0]))
 
     const items = await prisma.item.findMany({
+      where: { itemType: 'product' },
       orderBy: { name: 'asc' }
     })
 
-    const stockData = items.map((item: any) => {
+    const stockData = items.map((item) => {
       const si = inMap.get(item.id) || 0
       const so = outMap.get(item.id) || 0
       return {

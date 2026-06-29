@@ -7,17 +7,6 @@ export async function GET() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     // 1. Total Investment (Optimized)
-    // Get aggregate stock balance per item
-    const stockBalances = await prisma.stockLedger.groupBy({
-      by: ['itemId'],
-      _sum: {
-        quantity: true
-      },
-      where: {
-        type: { in: [1, 2] } // 1: In, 2: Out
-      }
-    })
-
     // This is still a bit tricky because balance = In - Out. 
     // Let's do it in two steps or use a more direct approach if possible.
     // Actually, for SQLite/Prisma, a better way for balance is separate sums:
@@ -75,12 +64,6 @@ export async function GET() {
       .slice(0, 5)
 
     // 4. Daily Sales Trend (Optimized)
-    const dailySales = await prisma.saleItem.groupBy({
-      by: ['createdAt'],
-      _sum: { total: true },
-      where: { createdAt: { gte: thirtyDaysAgo } }
-    })
-
     const salesByDay = new Map()
     // Since groupBy on Date includes time, we need to normalize or use a different approach for chart
     // For simplicity and accuracy with timezones, we'll process the recentSalesItems we already have

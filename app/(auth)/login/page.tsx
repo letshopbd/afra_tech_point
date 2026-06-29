@@ -3,35 +3,54 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { Lock, User } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!username || !password) {
+      toast.error("Please fill in all fields")
+      return
+    }
+
     setIsLoading(true)
-    const result = await signIn("credentials", {
-      username: data.username,
-      password: data.password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn("credentials", {
+        username: username,
+        password: password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      toast.error(result.error === "CredentialsSignin" ? "Invalid username or password" : result.error)
+      if (result?.error) {
+        toast.error(result.error === "CredentialsSignin" ? "Invalid username or password" : result.error)
+      } else {
+        toast.success("Login successful")
+        setTimeout(() => { window.location.href = "/" }, 300)
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "An unexpected error occurred during login")
+    } finally {
       setIsLoading(false)
-    } else {
-      toast.success("Login successful")
-      router.push("/")
-      router.refresh()
     }
   }
 
   return (
     <div className="auth-layout">
+      <script dangerouslySetInnerHTML={{ __html: `
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+          alert("Login Page JS Error: " + msg + "\\nLine: " + lineNo + ":" + columnNo + "\\nURL: " + url);
+          return false;
+        };
+        window.onunhandledrejection = function (event) {
+          alert("Login Page Promise Error: " + (event.reason?.message || event.reason));
+        };
+      `}} />
       {/* Left side - Brand/Illustration */}
       <div className="auth-brand">
         <div>
@@ -50,12 +69,13 @@ export default function LoginPage() {
       {/* Right side - Login Form */}
       <div className="auth-form-container">
         <div className="auth-form-wrapper">
-          <div className="auth-form-header">
+          <div className="auth-form-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <img src="/logo.png" alt="Logo" style={{ height: '56px', marginBottom: 'var(--space-4)', objectFit: 'contain' }} />
             <h2>Welcome Back</h2>
             <p>Please enter your details to sign in.</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={onSubmit}>
             <div className="form-group">
               <label className="form-label">Username</label>
               <div style={{ position: 'relative' }}>
@@ -63,13 +83,14 @@ export default function LoginPage() {
                   <User size={18} />
                 </div>
                 <input
-                  {...register("username", { required: "Username is required" })}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="input-field"
                   style={{ paddingLeft: '40px' }}
                   placeholder="Enter your username"
+                  required
                 />
               </div>
-              {errors.username && <p className="form-error">{errors.username.message as string}</p>}
             </div>
 
             <div className="form-group">
@@ -80,13 +101,14 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="password"
-                  {...register("password", { required: "Password is required" })}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="input-field"
                   style={{ paddingLeft: '40px' }}
                   placeholder="••••••••"
+                  required
                 />
               </div>
-              {errors.password && <p className="form-error">{errors.password.message as string}</p>}
             </div>
 
             <button

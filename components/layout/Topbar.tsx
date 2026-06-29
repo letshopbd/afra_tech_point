@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react"
 import { LogOut, User as UserIcon, Languages, Menu } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 import { useMobileMenu } from "@/components/providers/MobileMenuProvider"
+import { translations } from "@/lib/translations"
 
 export default function Topbar() {
   const pathname = usePathname()
@@ -16,7 +17,7 @@ export default function Topbar() {
   const getPageTitle = () => {
     if (pathname === "/") return t('dashboard')
     const path = pathname?.split("/")[1] || ""
-    const keyMap: Record<string, any> = {
+    const keyMap: Record<string, keyof typeof translations['en']> = {
       'items': 'items',
       'purchase': 'purchase',
       'sale': 'sale',
@@ -24,10 +25,11 @@ export default function Topbar() {
       'invoices': 'invoices',
       'statement': 'statement',
       'settings': 'settings',
-      'manage': 'manageRecords'
+      'manage': 'manageRecords',
+      'barcode': 'barcodePrinter'
     }
-    const key = keyMap[path] || path;
-    return t(key) || path;
+    const key = keyMap[path]
+    return key ? t(key) : path
   }
 
   return (

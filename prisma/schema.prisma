@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider = "sqlite"
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model User {
@@ -24,6 +23,9 @@ model Item {
   name          String         @unique
   description   String?
   cost          Decimal        @default(0.00)
+  price         Decimal        @default(0.00)
+  itemType      String         @default("product") // "product" or "service"
+  barcode       String?        @unique
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
   purchaseItems PurchaseItem[]
@@ -32,7 +34,6 @@ model Item {
 
   @@map("items")
 }
-
 model Purchase {
   id         Int            @id @default(autoincrement())
   supplierId Int?           @map("supplier_id")
@@ -56,18 +57,29 @@ model PurchaseItem {
   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
+  @@index([purchaseId])
+  @@index([itemId])
   @@map("purchase_items")
 }
 
 model Sale {
-  id        Int        @id @default(autoincrement())
-  customer  String?
-  remarks   String?
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  items     SaleItem[]
-  invoice   Invoice?
+  id              Int            @id @default(autoincrement())
+  customer        String
+  customerPhone   String?        @map("customer_phone")
+  customerAddress String?        @map("customer_address")
+  remarks         String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  items           SaleItem[]
+  invoice         Invoice?
 
+  // Service tracking fields
+  isServiceJob    Boolean        @default(false) @map("is_service_job")
+  deviceModel     String?        @map("device_model")
+  problemDesc     String?        @map("problem_desc")
+  serviceStatus   String         @default("pending") @map("service_status") // "pending" | "progress" | "completed"
+
+  @@index([createdAt])
   @@map("sales")
 }
 
@@ -84,6 +96,8 @@ model SaleItem {
   sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
+  @@index([saleId])
+  @@index([itemId])
   @@map("sale_items")
 }
 
@@ -99,6 +113,8 @@ model StockLedger {
   createdAt DateTime @default(now()) @map("created_at")
   item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
+  @@index([itemId])
+  @@index([createdAt])
   @@map("stock_ledger")
 }
 
@@ -120,6 +136,7 @@ model Invoice {
   updatedAt             DateTime @updatedAt @map("updated_at")
   sale                  Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
+  @@index([createdAt])
   @@map("invoices")
 }
 

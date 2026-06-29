@@ -12,6 +12,8 @@ export const translations = {
     invoices: "Invoices",
     statement: "Statement",
     settings: "Settings",
+    barcodePrinter: "Barcode Printer",
+    service: "Service Job",
     logout: "Logout",
 
     // Dashboard
@@ -121,6 +123,12 @@ export const translations = {
     invoicePhone: "Invoice Phone",
     invoiceAddress: "Invoice Address",
     settingsSaved: "Settings Saved Successfully!",
+    security: "Security & Account",
+    changePassword: "Change Password",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmPassword: "Confirm Password",
+    passwordRequirements: "Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
 
     // Manage Records Page
     purchaseRecords: "Purchase Records",
@@ -157,6 +165,8 @@ export const translations = {
     invoices: "ইনভয়েস",
     statement: "স্টেটমেন্ট",
     settings: "সেটিংস",
+    barcodePrinter: "বারকোড প্রিন্টার",
+    service: "সার্ভিস জব",
     logout: "লগআউট",
 
     // Dashboard
@@ -273,6 +283,12 @@ export const translations = {
     invoicePhone: "ইনভয়েস ফোন",
     invoiceAddress: "ইনভয়েস ঠিকানা",
     settingsSaved: "সেটিংস সফলভাবে সংরক্ষিত হয়েছে!",
+    security: "সিকিউরিটি ও অ্যাকাউন্ট",
+    changePassword: "পাসওয়ার্ড পরিবর্তন",
+    currentPassword: "বর্তমান পাসওয়ার্ড",
+    newPassword: "নতুন পাসওয়ার্ড",
+    confirmPassword: "পাসওয়ার্ড নিশ্চিত করুন",
+    passwordRequirements: "পাসওয়ার্ড অবশ্যই কমপক্ষে ৮ অক্ষরের হতে হবে এবং এতে অন্তত একটি বড় হাতের অক্ষর, একটি ছোট হাতের অক্ষর, একটি সংখ্যা এবং একটি বিশেষ চিহ্ন থাকতে হবে।",
 
     // Manage Records Page
     totalAmount: "মোট পরিমাণ",

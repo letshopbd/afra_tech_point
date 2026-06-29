@@ -6,20 +6,46 @@ import { toast } from "sonner"
 import { Printer } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
+interface InvoiceItem {
+  item?: { name: string }
+  imeiNumber?: string
+  quantity: number
+  rate: number
+  total: number
+}
+
+interface Invoice {
+  invoiceNumber: string
+  createdAt: string
+  customerName?: string
+  customerPhone?: string
+  customerAddress?: string
+  subtotal: number
+  taxAmount: number
+  discountAmount: number
+  totalAmount: number
+  notes?: string
+  sale?: {
+    items: InvoiceItem[]
+  }
+}
+
+interface Settings {
+  invoiceCompanyName?: string
+  invoiceCompanyAddress?: string
+  invoicePhone?: string
+}
+
 export default function InvoicePrintPage() {
   const { t, language } = useLanguage()
   const params = useParams()
   const id = params?.id as string
   
-  const [invoice, setInvoice] = useState<any>(null)
-  const [settings, setSettings] = useState<any>(null)
+  const [invoice, setInvoice] = useState<Invoice | null>(null)
+  const [settings, setSettings] = useState<Settings | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchData()
-  }, [id])
-
-  const fetchData = async () => {
+  async function fetchData() {
     try {
       const [invRes, setRes] = await Promise.all([
         fetch(`/api/invoices/${id}`),
@@ -34,12 +60,18 @@ export default function InvoicePrintPage() {
       setInvoice(invoiceData)
       setSettings(settingsData)
       
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch invoice details")
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>{t('loading')}</div>
   if (!invoice) return <div style={{ padding: '2rem', textAlign: 'center' }}>Invoice not found.</div>
@@ -88,16 +120,19 @@ export default function InvoicePrintPage() {
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1.5px solid #e5e7eb', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: '#4f46e5' }}>
-                {settings?.invoiceCompanyName || "Afra Tech Point"}
-              </h1>
-              <p style={{ fontSize: '0.7rem', margin: '0.2rem 0 0 0', color: '#6b7280', whiteSpace: 'pre-line', maxWidth: '200px' }}>
-                {settings?.invoiceCompanyAddress || "Mohila Collage Gate, Dhunat, Bogura"}
-              </p>
-              <p style={{ fontSize: '0.7rem', margin: '0.1rem 0 0 0', color: '#6b7280' }}>
-                {t('phoneNumber')}: {settings?.invoicePhone || "017044996944"}
-              </p>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+              <img src="/logo.png" alt="Logo" style={{ height: '40px', width: '40px', objectFit: 'contain', marginTop: '3px' }} />
+              <div>
+                <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: '#4f46e5' }}>
+                  {settings?.invoiceCompanyName || "Afra Tech Point"}
+                </h1>
+                <p style={{ fontSize: '0.7rem', margin: '0.2rem 0 0 0', color: '#6b7280', whiteSpace: 'pre-line', maxWidth: '200px' }}>
+                  {settings?.invoiceCompanyAddress || "Mohila Collage Gate, Dhunat, Bogura"}
+                </p>
+                <p style={{ fontSize: '0.7rem', margin: '0.1rem 0 0 0', color: '#6b7280' }}>
+                  {t('phoneNumber')}: {settings?.invoicePhone || "017044996944"}
+                </p>
+              </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 300, margin: 0, color: '#d1d5db', textTransform: 'uppercase' }}>{t('invoices')}</h2>
@@ -133,7 +168,7 @@ export default function InvoicePrintPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.sale?.items.map((item: any, idx: number) => (
+              {invoice.sale?.items.map((item: InvoiceItem, idx: number) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '0.4rem' }}>
                     <div style={{ fontWeight: 500 }}>{item.item?.name || "Unknown Item"}</div>

@@ -5,9 +5,41 @@ import { prisma } from './prisma'
 import { checkRateLimit, recordFailure, recordSuccess } from './rate-limit'
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: 'jwt' },
+  session: { 
+    strategy: 'jwt',
+    maxAge: 12 * 60 * 60, // 12 hours session timeout
+  },
   secret: process.env.NEXTAUTH_SECRET,
   pages: { signIn: '/login' },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+  },
+
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -17,7 +49,8 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         // Get IP from headers
-        const ip = (req?.headers as any)?.['x-forwarded-for'] || '127.0.0.1'
+        const forwardedFor = (req?.headers as Record<string, string | string[] | undefined>)?.[ 'x-forwarded-for' ]
+        const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : (forwardedFor || '127.0.0.1')
         
         // Check Rate Limit
         const { allowed, reset } = checkRateLimit(ip)

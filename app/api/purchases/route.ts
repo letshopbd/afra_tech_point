@@ -40,6 +40,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Purchase items are required" }, { status: 400 })
     }
 
+    interface PurchaseItemInput {
+      itemId: string
+      quantity: string
+      unit?: string
+      rate: string
+      price?: string
+    }
+
     // Use transaction to ensure atomic updates
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create Purchase
@@ -47,7 +55,7 @@ export async function POST(req: Request) {
         data: {
           remarks,
           items: {
-            create: items.map((item: any) => ({
+            create: items.map((item: PurchaseItemInput) => ({
               itemId: parseInt(item.itemId),
               quantity: parseInt(item.quantity),
               unit: item.unit || "pcs",
@@ -59,8 +67,11 @@ export async function POST(req: Request) {
         include: { items: true }
       })
 
-      // 2. Update Stock Ledger for each item
+      // 2. Update Stock Ledger & parent item cost/retail price
       for (const pItem of purchase.items) {
+        const inputItem = items.find((i: PurchaseItemInput) => parseInt(i.itemId) === pItem.itemId)
+        const retailPrice = inputItem && inputItem.price ? parseFloat(inputItem.price) : null
+
         await tx.stockLedger.create({
           data: {
             itemId: pItem.itemId,
@@ -70,6 +81,15 @@ export async function POST(req: Request) {
             type: 1, // 1 = Stock In
             refType: 'purchase',
             refId: purchase.id
+          }
+        })
+
+        // Update item base prices
+        await tx.item.update({
+          where: { id: pItem.itemId },
+          data: {
+            cost: pItem.rate,
+            ...(retailPrice !== null ? { price: retailPrice } : {})
           }
         })
       }
