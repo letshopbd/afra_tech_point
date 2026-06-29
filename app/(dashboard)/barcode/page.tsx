@@ -181,12 +181,16 @@ export default function BarcodePage() {
       {/* Styles for print output */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body * { visibility: hidden; }
-          .printable-a4-sheet, .printable-a4-sheet * { visibility: visible; }
+          html, body {
+            height: auto !important;
+            min-height: unset !important;
+            overflow: visible !important;
+          }
+          .no-print {
+            display: none !important;
+          }
           .printable-a4-sheet {
-            position: absolute;
-            left: 0;
-            top: 0;
+            position: static !important;
             width: 100% !important;
             height: auto !important;
             min-height: unset !important;
@@ -220,7 +224,7 @@ export default function BarcodePage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-6)', contentVisibility: 'auto' }}>
         
         {/* Top Control Panel */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>
+        <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>
           
           {/* Add to Queue Card */}
           <div className="card">
