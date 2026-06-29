@@ -37,7 +37,7 @@ function BarcodeSticker({ name, barcode, price, height, showPrice, showName }: {
   return (
     <div className="barcode-sticker-card" style={{
       border: '1px dashed #cbd5e1',
-      padding: '4px',
+      padding: '1px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -184,10 +184,10 @@ export default function BarcodePage() {
           body * { visibility: hidden; }
           .printable-a4-sheet, .printable-a4-sheet * { visibility: visible; }
           .printable-a4-sheet {
-            position: fixed;
+            position: absolute;
             left: 0;
             top: 0;
-            width: 210mm !important;
+            width: 100% !important;
             height: auto !important;
             min-height: unset !important;
             margin: 0 !important;
@@ -211,7 +211,7 @@ export default function BarcodePage() {
             width: 100% !important;
           }
           @page {
-            size: A4;
+            size: auto;
             margin: 0;
           }
         }
