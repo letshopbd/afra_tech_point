@@ -181,19 +181,15 @@ export default function BarcodePage() {
       {/* Styles for print output */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          /* Hide sidebar, topbar, inputs, settings panels */
-          body * {
-            visibility: hidden;
-          }
-          .printable-a4-sheet, .printable-a4-sheet * {
-            visibility: visible;
-          }
+          body * { visibility: hidden; }
+          .printable-a4-sheet, .printable-a4-sheet * { visibility: visible; }
           .printable-a4-sheet {
-            position: absolute;
+            position: fixed;
             left: 0;
             top: 0;
             width: 210mm !important;
-            min-height: 297mm !important;
+            height: auto !important;
+            min-height: unset !important;
             margin: 0 !important;
             padding: ${topMargin}mm ${sideMargin}mm !important;
             box-sizing: border-box !important;
@@ -201,9 +197,22 @@ export default function BarcodePage() {
             color: black !important;
             box-shadow: none !important;
             border: none !important;
+            overflow: visible !important;
           }
           .barcode-sticker-card {
-            border: 1px solid #000 !important; /* Force black border on print */
+            border: 1px solid #000 !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          .barcode-grid {
+            display: grid !important;
+            grid-template-columns: repeat(${columns}, 1fr) !important;
+            gap: 1mm !important;
+            width: 100% !important;
+          }
+          @page {
+            size: A4;
+            margin: 0;
           }
         }
       `}} />
@@ -413,23 +422,25 @@ export default function BarcodePage() {
           <div>
             <h4 style={{ marginBottom: 'var(--space-3)' }}>{language === 'bn' ? "এ৪ পৃষ্ঠা প্রিভিউ (প্রিন্ট করার পূর্বে দেখে নিন)" : "A4 Page Preview"}</h4>
             
-            {/* Printable A4 Container */}
+            {/* Printable A4 Container — auto height, multi-page safe */}
             <div className="printable-a4-sheet" style={{
               width: '210mm',
               minHeight: '297mm',
+              height: 'auto',
               margin: '0 auto',
               backgroundColor: 'white',
               boxShadow: 'var(--shadow-lg)',
               border: '1px solid var(--border)',
               padding: `${topMargin}mm ${sideMargin}mm`,
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              overflow: 'visible'
             }}>
               
               {/* Grid Wrapper */}
-              <div style={{
+              <div className="barcode-grid" style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                gap: '2mm',
+                gap: '1mm',
                 width: '100%'
               }}>
                 {flattenedStickers.map((sticker, idx) => (
