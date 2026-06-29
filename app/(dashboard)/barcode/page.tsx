@@ -186,7 +186,7 @@ export default function BarcodePage() {
             min-height: unset !important;
             overflow: visible !important;
           }
-          .no-print {
+          .no-print, [data-sonner-toaster] {
             display: none !important;
           }
           .printable-a4-sheet {
