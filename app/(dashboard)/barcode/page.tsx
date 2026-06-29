@@ -345,7 +345,7 @@ export default function BarcodePage() {
 
         {/* Print Queue / Selection List */}
         {printQueue.length > 0 && (
-          <div className="card">
+          <div className="card no-print">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: 'var(--text-main)' }}>
                 <FileSpreadsheet size={20} />
@@ -424,7 +424,7 @@ export default function BarcodePage() {
         {/* Real-time A4 Preview Card */}
         {printQueue.length > 0 && (
           <div>
-            <h4 style={{ marginBottom: 'var(--space-3)' }}>{language === 'bn' ? "এ৪ পৃষ্ঠা প্রিভিউ (প্রিন্ট করার পূর্বে দেখে নিন)" : "A4 Page Preview"}</h4>
+            <h4 className="no-print" style={{ marginBottom: 'var(--space-3)' }}>{language === 'bn' ? "এ৪ পৃষ্ঠা প্রিভিউ (প্রিন্ট করার পূর্বে দেখে নিন)" : "A4 Page Preview"}</h4>
             
             {/* Printable A4 Container — auto height, multi-page safe */}
             <div className="printable-a4-sheet" style={{
