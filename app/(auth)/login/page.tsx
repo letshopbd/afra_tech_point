@@ -31,7 +31,8 @@ export default function LoginPage() {
         toast.error(result.error === "CredentialsSignin" ? "Invalid username or password" : result.error)
       } else {
         toast.success("Login successful")
-        setTimeout(() => { window.location.href = "/" }, 300)
+        router.push("/")
+        router.refresh()
       }
     } catch (error: any) {
       toast.error(error?.message || "An unexpected error occurred during login")
@@ -42,15 +43,6 @@ export default function LoginPage() {
 
   return (
     <div className="auth-layout">
-      <script dangerouslySetInnerHTML={{ __html: `
-        window.onerror = function (msg, url, lineNo, columnNo, error) {
-          alert("Login Page JS Error: " + msg + "\\nLine: " + lineNo + ":" + columnNo + "\\nURL: " + url);
-          return false;
-        };
-        window.onunhandledrejection = function (event) {
-          alert("Login Page Promise Error: " + (event.reason?.message || event.reason));
-        };
-      `}} />
       {/* Left side - Brand/Illustration */}
       <div className="auth-brand">
         <div>
