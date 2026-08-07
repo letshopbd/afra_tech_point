@@ -143,8 +143,17 @@ export async function POST(req: Request) {
       const tAmount = taxAmount ? parseFloat(taxAmount) : 0
       const totalAmount = subtotal + tAmount - dAmount
       
-      const invoiceCount = await tx.invoice.count()
-      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invoiceCount + 1).padStart(6, '0')}`
+      // Generate invoice number from the highest existing number (gaps from deletions are safe)
+      const lastInvoice = await tx.invoice.findFirst({
+        orderBy: { id: 'desc' },
+        select: { invoiceNumber: true }
+      })
+      let nextInvoiceNum = 1
+      if (lastInvoice?.invoiceNumber) {
+        const m = lastInvoice.invoiceNumber.match(/(\d+)$/)
+        if (m) nextInvoiceNum = parseInt(m[1], 10) + 1
+      }
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(nextInvoiceNum).padStart(6, '0')}`
 
       const invoice = await tx.invoice.create({
         data: {
