@@ -206,7 +206,14 @@ export default function StatementPage() {
                             {i === 0 ? (
                               <>
                                 <td rowSpan={record.items.length}>{new Date(record.date).toLocaleDateString()}</td>
-                                <td rowSpan={record.items.length} style={{ fontWeight: 600 }}>{record.ref}</td>
+                                <td rowSpan={record.items.length} style={{ fontWeight: 600 }}>
+                                  {record.ref}
+                                  {record.discount > 0 && (
+                                    <div style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 600 }}>
+                                      {t('discount')}: -৳{(record.discount || 0).toLocaleString()}
+                                    </div>
+                                  )}
+                                </td>
                               </>
                             ) : null}
                             <td>{item.name}</td>

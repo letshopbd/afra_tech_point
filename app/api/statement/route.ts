@@ -51,7 +51,10 @@ export async function GET(req: Request) {
     let totalSalesProfit = 0
 
     const sales = salesData.map(sale => {
-      const amount = sale.invoice ? Number(sale.invoice.totalAmount) : 0
+      const itemSum = sale.items.reduce((sum, si) => sum + Number(si.total), 0)
+      const amount = sale.invoice ? Number(sale.invoice.totalAmount) : itemSum
+      // Scale line totals to the invoice total so discounts/tax are reflected per row
+      const scale = itemSum > 0 ? amount / itemSum : 0
       totalSales += amount
       return {
         id: sale.id,
@@ -59,16 +62,18 @@ export async function GET(req: Request) {
         customer: sale.customer,
         ref: sale.invoice?.invoiceNumber || `#${sale.id}`,
         amount,
+        discount: sale.invoice ? Number(sale.invoice.discountAmount) || 0 : 0,
         items: sale.items.map(si => {
           const cost = Number(si.item.cost) || 0
-          const profit = (Number(si.rate) - cost) * si.quantity
+          const discountedTotal = Number(si.total) * scale
+          const profit = discountedTotal - cost * si.quantity
           totalSalesProfit += profit
           return {
             name: si.item.name,
             quantity: si.quantity,
             unit: si.unit,
             rate: Number(si.rate),
-            total: Number(si.total),
+            total: discountedTotal,
             cost,
             profit
           }
