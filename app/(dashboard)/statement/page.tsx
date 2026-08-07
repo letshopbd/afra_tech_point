@@ -227,8 +227,8 @@ export default function StatementPage() {
                     {data.sales.length > 0 && (
                       <tr className="total-row">
                         <td colSpan={5} style={{ textAlign: 'right', fontWeight: 700 }}>{t('total_short')} {t('saleRecords')}:</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.salesProfit || 0).toLocaleString()}</td>
                         <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.totalSales || 0).toLocaleString()}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.salesProfit || 0).toLocaleString()}</td>
                       </tr>
                     )}
                   </tbody>
