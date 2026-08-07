@@ -48,6 +48,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
 
     await prisma.$transaction([
+      prisma.invoice.delete({ where: { id } }),
       prisma.stockLedger.deleteMany({ where: { refId: invoice.saleId, refType: { in: ['sale', 'SALE'] } } }),
       prisma.sale.delete({ where: { id: invoice.saleId } })
     ])
