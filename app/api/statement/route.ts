@@ -49,6 +49,7 @@ export async function GET(req: Request) {
     let totalSales = 0
     let totalPurchases = 0
     let totalSalesProfit = 0
+    let totalCogs = 0
 
     const sales = salesData.map(sale => {
       const itemSum = sale.items.reduce((sum, si) => sum + Number(si.total), 0)
@@ -68,11 +69,12 @@ export async function GET(req: Request) {
           const discountedTotal = Number(si.total) * scale
           const profit = discountedTotal - cost * si.quantity
           totalSalesProfit += profit
+          totalCogs += cost * si.quantity
           return {
             name: si.item.name,
             quantity: si.quantity,
             unit: si.unit,
-            rate: Number(si.rate),
+            rate: Number(si.rate) * scale,
             total: discountedTotal,
             cost,
             profit
@@ -139,9 +141,10 @@ export async function GET(req: Request) {
       summary: {
         totalSales,
         totalPurchases,
+        cogs: totalCogs,
         salesProfit: totalSalesProfit,
         totalStockValue,
-        netProfit: totalSales - totalPurchases
+        netProfit: totalSalesProfit
       },
       sales,
       purchases,

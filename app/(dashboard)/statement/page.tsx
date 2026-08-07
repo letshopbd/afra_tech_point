@@ -333,7 +333,7 @@ export default function StatementPage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.85rem' }}>
                   <span style={{ color: '#64748b' }}>Total Buy Cost:</span>
-                  <span style={{ fontWeight: 600 }}>৳ {data.summary.totalPurchases.toLocaleString()}</span>
+                  <span style={{ fontWeight: 600 }}>৳ {(data.summary.cogs ?? data.summary.totalPurchases).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid #e2e8f0', marginTop: '4px', fontSize: '1.1rem', fontWeight: 800 }}>
                   <span>Net Profit:</span>

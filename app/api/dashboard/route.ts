@@ -38,24 +38,39 @@ export async function GET() {
     })
 
     // 2. Total Sales & 3. Estimated Profit (Optimized)
-    const recentSalesItems = await prisma.saleItem.findMany({
+    const recentSales = await prisma.sale.findMany({
       where: { createdAt: { gte: thirtyDaysAgo } },
-      include: { item: true }
+      include: { invoice: true, items: { include: { item: true } } }
     })
 
     const itemSalesMap = new Map()
     let estimatedProfit = 0
     let totalSalesRevenue = 0
 
-    recentSalesItems.forEach(si => {
-      const current = itemSalesMap.get(si.itemId) || { name: si.item.name, qty: 0, revenue: 0, cost: 0 }
-      current.qty += si.quantity
-      current.revenue += Number(si.total)
-      current.cost += si.quantity * Number(si.item.cost)
-      itemSalesMap.set(si.itemId, current)
-      
-      totalSalesRevenue += Number(si.total)
-      estimatedProfit += (Number(si.total) - (si.quantity * Number(si.item.cost)))
+    const localDateStr = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+    const salesByDay = new Map()
+
+    recentSales.forEach(sale => {
+      const itemSum = sale.items.reduce((sum, si) => sum + Number(si.total), 0)
+      const amount = sale.invoice ? Number(sale.invoice.totalAmount) : itemSum
+      const scale = itemSum > 0 ? amount / itemSum : 0
+
+      totalSalesRevenue += amount
+      const dateStr = localDateStr(sale.createdAt)
+      salesByDay.set(dateStr, (salesByDay.get(dateStr) || 0) + amount)
+
+      sale.items.forEach(si => {
+        const discountedTotal = Number(si.total) * scale
+        const current = itemSalesMap.get(si.itemId) || { name: si.item.name, qty: 0, revenue: 0, cost: 0 }
+        current.qty += si.quantity
+        current.revenue += discountedTotal
+        current.cost += si.quantity * Number(si.item.cost)
+        itemSalesMap.set(si.itemId, current)
+
+        estimatedProfit += discountedTotal - (si.quantity * Number(si.item.cost))
+      })
     })
 
     const topItems = Array.from(itemSalesMap.values())
@@ -64,19 +79,11 @@ export async function GET() {
       .slice(0, 5)
 
     // 4. Daily Sales Trend (Optimized)
-    const salesByDay = new Map()
-    // Since groupBy on Date includes time, we need to normalize or use a different approach for chart
-    // For simplicity and accuracy with timezones, we'll process the recentSalesItems we already have
-    recentSalesItems.forEach(si => {
-      const dateStr = si.createdAt.toISOString().split('T')[0]
-      salesByDay.set(dateStr, (salesByDay.get(dateStr) || 0) + Number(si.total))
-    })
-
     const chartData = []
     for (let i = 29; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
+      const dateStr = localDateStr(d)
       chartData.push({
         date: dateStr,
         amount: salesByDay.get(dateStr) || 0
