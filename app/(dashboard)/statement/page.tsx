@@ -2,15 +2,21 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Search, Printer } from "lucide-react"
+import { Search, Printer, ChevronLeft, ChevronRight } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
 export default function StatementPage() {
   const { t } = useLanguage()
   
   const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-  const today = now.toISOString().split('T')[0]
+  const toDateInput = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+  const firstDay = toDateInput(new Date(now.getFullYear(), now.getMonth(), 1))
+  const today = toDateInput(now)
 
   const [startDate, setStartDate] = useState(firstDay)
   const [endDate, setEndDate] = useState(today)
@@ -52,6 +58,19 @@ export default function StatementPage() {
     window.print()
   }
 
+  const shiftMonth = (delta: number) => {
+    const [y, m] = startDate.split('-').map(Number)
+    if (!y || !m) return
+    const target = new Date(y, m - 1 + delta, 1)
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0)
+    const nowDate = new Date()
+    const isCurrentMonth =
+      target.getFullYear() === nowDate.getFullYear() &&
+      target.getMonth() === nowDate.getMonth()
+    setStartDate(toDateInput(target))
+    setEndDate(isCurrentMonth ? toDateInput(nowDate) : toDateInput(lastDay))
+  }
+
   return (
     <div className="flex-col gap-6" style={{ display: 'flex' }}>
       
@@ -81,6 +100,15 @@ export default function StatementPage() {
             />
           </div>
           
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'flex-end' }}>
+            <button type="button" onClick={() => shiftMonth(-1)} className="btn" style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', padding: '0.75rem 1rem', flexShrink: 0 }} title="Previous month">
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" onClick={() => shiftMonth(1)} className="btn" style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', padding: '0.75rem 1rem', flexShrink: 0 }} title="Next month">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
           <button type="submit" disabled={loading} className="btn btn-primary full-width-mobile" style={{ padding: '0.75rem 1.5rem', flexShrink: 0 }}>
             {loading ? t('generating') : <><Search size={18} /> {t('generateStatement')}</>}
           </button>
@@ -152,7 +180,7 @@ export default function StatementPage() {
 
             {/* Sales Section */}
             <div style={{ marginBottom: 'var(--space-8)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+              <div className="print-section-heading" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
                 <div style={{ height: '18px', width: '3px', backgroundColor: '#0ea5e9', borderRadius: '2px' }}></div>
                 <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase' }}>{t('saleRecords')}</h3>
               </div>
@@ -166,11 +194,12 @@ export default function StatementPage() {
                       <th style={{ width: '60px', textAlign: 'center' }}>{t('qty')}</th>
                       <th style={{ width: '90px', textAlign: 'right' }}>{t('rate')}</th>
                       <th style={{ width: '100px', textAlign: 'right' }}>{t('total')}</th>
+                      <th style={{ width: '100px', textAlign: 'right' }}>Profit</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.sales.length === 0 ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-4)', color: '#94a3b8' }}>No sales records found.</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-4)', color: '#94a3b8' }}>No sales records found.</td></tr>
                     ) : data.sales.map((record: any) => 
                         record.items.map((item: any, i: number) => (
                           <tr key={`${record.id}-${i}`}>
@@ -184,12 +213,14 @@ export default function StatementPage() {
                             <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                             <td style={{ textAlign: 'right' }}>৳{(item.rate || 0).toLocaleString()}</td>
                             <td style={{ textAlign: 'right', fontWeight: 600 }}>৳{(item.total || 0).toLocaleString()}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: (item.profit || 0) >= 0 ? '#16a34a' : '#dc2626' }}>৳{(item.profit || 0).toLocaleString()}</td>
                           </tr>
                         ))
                     )}
                     {data.sales.length > 0 && (
                       <tr className="total-row">
                         <td colSpan={5} style={{ textAlign: 'right', fontWeight: 700 }}>{t('total_short')} {t('saleRecords')}:</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.salesProfit || 0).toLocaleString()}</td>
                         <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.totalSales || 0).toLocaleString()}</td>
                       </tr>
                     )}
@@ -200,7 +231,7 @@ export default function StatementPage() {
 
             {/* Purchases Section */}
             <div style={{ marginBottom: 'var(--space-8)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+              <div className="print-section-heading" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
                 <div style={{ height: '18px', width: '3px', backgroundColor: '#ef4444', borderRadius: '2px' }}></div>
                 <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase' }}>{t('purchaseRecords')}</h3>
               </div>
@@ -239,6 +270,46 @@ export default function StatementPage() {
                       <tr className="total-row">
                         <td colSpan={5} style={{ textAlign: 'right', fontWeight: 700 }}>{t('total_short')} {t('purchaseRecords')}:</td>
                         <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {data.summary.totalPurchases.toLocaleString()}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Stock Section */}
+            <div style={{ marginBottom: 'var(--space-8)' }}>
+              <div className="print-section-heading" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+                <div style={{ height: '18px', width: '3px', backgroundColor: '#10b981', borderRadius: '2px' }}></div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase' }}>{t('stockStatus')}</h3>
+              </div>
+              <div className="table-container">
+                <table className="table statement-table print-table">
+                  <thead>
+                    <tr>
+                      <th>{t('product')}</th>
+                      <th style={{ width: '100px', textAlign: 'right' }}>{t('buyRate')}</th>
+                      <th style={{ width: '100px', textAlign: 'right' }}>{t('saleRate')}</th>
+                      <th style={{ width: '70px', textAlign: 'center' }}>{t('qty')}</th>
+                      <th style={{ width: '110px', textAlign: 'right' }}>{t('stockValue')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.stock.length === 0 ? (
+                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-4)', color: '#94a3b8' }}>No stock available.</td></tr>
+                    ) : data.stock.map((item: any) => (
+                      <tr key={item.id}>
+                        <td style={{ fontWeight: 500 }}>{item.name}</td>
+                        <td style={{ textAlign: 'right' }}>৳{(item.cost || 0).toLocaleString()}</td>
+                        <td style={{ textAlign: 'right' }}>৳{(item.price || 0).toLocaleString()}</td>
+                        <td style={{ textAlign: 'center' }}>{item.balance}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>৳{(item.value || 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {data.stock.length > 0 && (
+                      <tr className="total-row">
+                        <td colSpan={4} style={{ textAlign: 'right', fontWeight: 700 }}>{t('total_short')} {t('stockValue')}:</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700 }}>৳ {(data.summary.totalStockValue || 0).toLocaleString()}</td>
                       </tr>
                     )}
                   </tbody>
@@ -298,12 +369,20 @@ export default function StatementPage() {
 
         @media print {
           @page {
-            size: A4;
-            margin: 10mm;
+            size: A4 portrait;
+            margin: 12mm 10mm;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+            min-width: 0 !important;
           }
           body {
             background: white !important;
             font-size: 11px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
           .no-print {
             display: none !important;
@@ -313,15 +392,37 @@ export default function StatementPage() {
             border: none !important;
             padding: 0 !important;
             margin: 0 !important;
+            margin-left: 0 !important;
             width: 100% !important;
-            min-height: 277mm !important; /* Force A4 height to allow absolute positioning at bottom */
-            position: relative !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow: visible !important;
+            /* Flex column so the footer can be pushed to the bottom of the last page */
+            display: flex !important;
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 277mm !important; /* A4 (297mm) minus @page margins */
+          }
+          /* Prevent horizontal clipping from screen scroll wrappers */
+          .table-container {
+            overflow: visible !important;
+          }
+          .printable-area > * {
+            flex-shrink: 0 !important;
           }
           
           .print-table {
             display: table !important;
             width: 100% !important;
-            border-collapse: collapse !important;
+            max-width: 100% !important;
+            /* Separate borders avoid the Chrome bug that clips repeated
+               header rows on continuation pages (with collapse) */
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            table-layout: fixed !important;
+          }
+          .print-table thead {
+            display: table-header-group !important; /* Repeat header on every page */
           }
           .print-table thead th {
             background-color: #f8fafc !important;
@@ -330,31 +431,46 @@ export default function StatementPage() {
             font-size: 11px !important;
             font-weight: 700 !important;
             -webkit-print-color-adjust: exact;
+            overflow-wrap: break-word !important;
           }
           .print-table tbody td {
             border: 1px solid #cbd5e1 !important;
             padding: 3px 6px !important;
             font-size: 10.5px !important;
             line-height: 1.2 !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
           }
           .total-row td {
             background-color: #f1f5f9 !important;
             font-weight: 700 !important;
             -webkit-print-color-adjust: exact;
           }
-          
+          .print-table tr {
+            page-break-inside: avoid !important;
+          }
+          /* Keep section headings glued to the start of their table */
+          .print-section-heading {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          /* Don't let a table start right at the very bottom of a page */
+          .print-table {
+            page-break-before: auto !important;
+          }
+
           .only-print {
             display: block !important;
           }
 
-          /* Force Signatures at absolute bottom of the total container */
+          /* Signature footer: pushed to the very bottom of the LAST page */
           .absolute-print-footer {
             display: block !important;
-            position: absolute !important;
-            bottom: 5mm !important;
-            left: 0 !important;
-            right: 0 !important;
+            position: static !important;
             width: 100% !important;
+            margin-top: auto !important; /* pins footer to bottom of the document */
+            padding-top: 6mm !important;
+            border-top: 1px solid #e2e8f0 !important;
           }
           .print-signature-wrap {
             display: flex !important;
@@ -379,10 +495,6 @@ export default function StatementPage() {
             margin-top: 15px !important;
             border-top: 1px solid #f1f5f9 !important;
             padding-top: 8px !important;
-          }
-          
-          .print-table tr {
-            page-break-inside: avoid !important;
           }
         }
       `}</style>

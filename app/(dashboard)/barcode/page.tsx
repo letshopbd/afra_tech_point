@@ -2,18 +2,19 @@
 
 import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { Printer, Plus, Trash2, Settings, FileSpreadsheet, RotateCcw } from "lucide-react"
+import { Printer, Plus, Trash2, FileSpreadsheet, RotateCcw } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 import JsBarcode from "jsbarcode"
 
+const LABEL_HEIGHT = 28 // mm
+const LABEL_COLUMNS = 4
+const LABEL_GAP = 3 // mm between labels (cutting space)
+const PAGE_MARGIN = 5 // mm
+
 // Individual Barcode Sticker Component
-function BarcodeSticker({ name, barcode, price, height, showPrice, showName }: { 
-  name: string, 
-  barcode: string, 
-  price: number, 
-  height: number,
-  showPrice: boolean,
-  showName: boolean
+function BarcodeSticker({ name, barcode }: {
+  name: string,
+  barcode: string
 }) {
   const svgRef = useRef<SVGSVGElement>(null)
 
@@ -22,9 +23,9 @@ function BarcodeSticker({ name, barcode, price, height, showPrice, showName }: {
       try {
         JsBarcode(svgRef.current, barcode, {
           format: "CODE128",
-          width: 1.1,
-          height: height - 12, // Leave space for text
-          fontSize: 7,
+          width: 2.2,
+          height: 80,
+          fontSize: 15,
           margin: 0,
           displayValue: true
         })
@@ -32,7 +33,7 @@ function BarcodeSticker({ name, barcode, price, height, showPrice, showName }: {
         console.error(err)
       }
     }
-  }, [barcode, height])
+  }, [barcode])
 
   return (
     <div className="barcode-sticker-card" style={{
@@ -45,38 +46,27 @@ function BarcodeSticker({ name, barcode, price, height, showPrice, showName }: {
       boxSizing: 'border-box',
       backgroundColor: 'white',
       color: 'black',
-      height: `${height}mm`,
+      height: `${LABEL_HEIGHT}mm`,
       overflow: 'hidden',
       pageBreakInside: 'avoid',
       breakInside: 'avoid',
       margin: '0 auto',
       width: '100%'
     }}>
-      {showName && (
-        <div style={{ 
-          fontSize: '7px', 
-          fontWeight: 'bold', 
-          width: '100%', 
-          whiteSpace: 'nowrap', 
-          overflow: 'hidden', 
-          textOverflow: 'ellipsis',
-          lineHeight: '1',
-          marginBottom: '1px'
-        }}>
-          {name}
-        </div>
-      )}
-      <svg ref={svgRef} style={{ maxWidth: '100%', display: 'block' }}></svg>
-      {showPrice && (
-        <div style={{ 
-          fontSize: '7px', 
-          fontWeight: 'bold', 
-          marginTop: '1px',
-          lineHeight: '1'
-        }}>
-          Price: ৳{Number(price || 0).toLocaleString()}
-        </div>
-      )}
+      <div style={{
+        fontSize: '8px',
+        fontWeight: 'bold',
+        width: '100%',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        textAlign: 'center',
+        lineHeight: '1',
+        marginBottom: '1px'
+      }}>
+        {name}
+      </div>
+      <svg ref={svgRef} style={{ width: '100%', height: 'auto', display: 'block' }}></svg>
     </div>
   )
 }
@@ -92,14 +82,6 @@ export default function BarcodePage() {
   
   // Queue State
   const [printQueue, setPrintQueue] = useState<any[]>([])
-
-  // Layout Configurations
-  const [columns, setColumns] = useState(3)
-  const [labelHeight, setLabelHeight] = useState(25) // in mm
-  const [showPrice, setShowPrice] = useState(true)
-  const [showName, setShowName] = useState(true)
-  const [topMargin, setTopMargin] = useState(10) // A4 top margin in mm
-  const [sideMargin, setSideMargin] = useState(10) // A4 side margin in mm
 
   async function fetchItems() {
     try {
@@ -170,8 +152,7 @@ export default function BarcodePage() {
     Array.from({ length: item.quantity }, () => ({
       id: item.id,
       name: item.name,
-      barcode: item.barcode,
-      price: item.price
+      barcode: item.barcode
     }))
   )
 
@@ -195,7 +176,7 @@ export default function BarcodePage() {
             height: auto !important;
             min-height: unset !important;
             margin: 0 !important;
-            padding: ${topMargin}mm ${sideMargin}mm !important;
+            padding: 0 !important;
             box-sizing: border-box !important;
             background: white !important;
             color: black !important;
@@ -204,19 +185,20 @@ export default function BarcodePage() {
             overflow: visible !important;
           }
           .barcode-sticker-card {
-            border: 1px solid #000 !important;
+            border: none !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
           }
           .barcode-grid {
             display: grid !important;
-            grid-template-columns: repeat(${columns}, 1fr) !important;
-            gap: 1mm !important;
+            grid-template-columns: repeat(${LABEL_COLUMNS}, 1fr) !important;
+            gap: ${LABEL_GAP}mm !important;
+            row-gap: ${LABEL_GAP}mm !important;
             width: 100% !important;
           }
           @page {
             size: auto;
-            margin: 0;
+            margin: ${PAGE_MARGIN}mm;
           }
         }
       `}} />
@@ -275,70 +257,6 @@ export default function BarcodePage() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Layout Settings Card */}
-          <div className="card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', color: 'var(--secondary)' }}>
-              <Settings size={20} />
-              <h4 style={{ margin: 0 }}>{language === 'bn' ? "এ৪ পৃষ্ঠা লেআউট সেটিংস" : "A4 Page Settings"}</h4>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-              <div>
-                <label className="form-label">{language === 'bn' ? "কলাম সংখ্যা" : "Columns"}</label>
-                <select 
-                  className="input-field"
-                  value={columns}
-                  onChange={(e) => setColumns(parseInt(e.target.value))}
-                >
-                  <option value={2}>{language === 'bn' ? "২ কলাম (৫ মিমি গ্যাপ)" : "2 Columns (5mm Gap)"}</option>
-                  <option value={3}>{language === 'bn' ? "৩ কলাম (স্ট্যান্ডার্ড)" : "3 Columns (Standard)"}</option>
-                  <option value={4}>{language === 'bn' ? "৪ কলাম (ছোট)" : "4 Columns (Small)"}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="form-label">{language === 'bn' ? "লেবেলের উচ্চতা (মিমি)" : "Label Height (mm)"}</label>
-                <input 
-                  type="number" 
-                  className="input-field"
-                  value={labelHeight}
-                  onChange={(e) => setLabelHeight(Math.max(10, parseInt(e.target.value) || 25))}
-                />
-              </div>
-
-              <div>
-                <label className="form-label">{language === 'bn' ? "উপরের মার্জিন (মিমি)" : "Top Margin (mm)"}</label>
-                <input 
-                  type="number" 
-                  className="input-field"
-                  value={topMargin}
-                  onChange={(e) => setTopMargin(Math.max(0, parseInt(e.target.value) || 0))}
-                />
-              </div>
-
-              <div>
-                <label className="form-label">{language === 'bn' ? "পার্শ্ব মার্জিন (মিমি)" : "Side Margin (mm)"}</label>
-                <input 
-                  type="number" 
-                  className="input-field"
-                  value={sideMargin}
-                  onChange={(e) => setSideMargin(Math.max(0, parseInt(e.target.value) || 0))}
-                />
-              </div>
-
-              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                  <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} />
-                  <span>{language === 'bn' ? "নাম দেখান" : "Show Name"}</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                  <input type="checkbox" checked={showPrice} onChange={(e) => setShowPrice(e.target.checked)} />
-                  <span>{language === 'bn' ? "দাম দেখান" : "Show Price"}</span>
-                </label>
-              </div>
-            </div>
           </div>
 
         </div>
@@ -435,7 +353,7 @@ export default function BarcodePage() {
               backgroundColor: 'white',
               boxShadow: 'var(--shadow-lg)',
               border: '1px solid var(--border)',
-              padding: `${topMargin}mm ${sideMargin}mm`,
+              padding: `${PAGE_MARGIN}mm`,
               boxSizing: 'border-box',
               overflow: 'visible'
             }}>
@@ -443,8 +361,9 @@ export default function BarcodePage() {
               {/* Grid Wrapper */}
               <div className="barcode-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                gap: '1mm',
+                gridTemplateColumns: `repeat(${LABEL_COLUMNS}, 1fr)`,
+                gap: `${LABEL_GAP}mm`,
+                rowGap: `${LABEL_GAP}mm`,
                 width: '100%'
               }}>
                 {flattenedStickers.map((sticker, idx) => (
@@ -452,10 +371,6 @@ export default function BarcodePage() {
                     key={`${sticker.id}-${idx}`}
                     name={sticker.name}
                     barcode={sticker.barcode}
-                    price={sticker.price}
-                    height={labelHeight}
-                    showPrice={showPrice}
-                    showName={showName}
                   />
                 ))}
               </div>
