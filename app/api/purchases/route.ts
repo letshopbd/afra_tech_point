@@ -4,6 +4,14 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 
+// Parse "YYYY-MM-DD" as local time (avoid UTC off-by-one)
+function parseLocalDate(s?: string) {
+  if (!s) return null
+  const [y, m, d] = s.split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session) {
@@ -34,7 +42,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { items, remarks } = body
+    const { items, remarks, purchaseDate } = body
 
     if (!items || !items.length) {
       return NextResponse.json({ error: "Purchase items are required" }, { status: 400 })
@@ -50,10 +58,13 @@ export async function POST(req: Request) {
 
     // Use transaction to ensure atomic updates
     const result = await prisma.$transaction(async (tx) => {
+      const purchaseDateParsed = parseLocalDate(purchaseDate)
+
       // 1. Create Purchase
       const purchase = await tx.purchase.create({
         data: {
           remarks,
+          ...(purchaseDateParsed ? { createdAt: purchaseDateParsed } : {}),
           items: {
             create: items.map((item: PurchaseItemInput) => ({
               itemId: parseInt(item.itemId),
@@ -80,7 +91,8 @@ export async function POST(req: Request) {
             rate: pItem.rate,
             type: 1, // 1 = Stock In
             refType: 'purchase',
-            refId: purchase.id
+            refId: purchase.id,
+            ...(purchaseDateParsed ? { createdAt: purchaseDateParsed } : {})
           }
         })
 

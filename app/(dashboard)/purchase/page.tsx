@@ -5,13 +5,21 @@ import { toast } from "sonner"
 import { Trash2, Plus, Save } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
+// Local-time date input value (avoid UTC toISOString off-by-one)
+function toDateInput(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export default function PurchasePage() {
   const { t, language } = useLanguage()
   const [items, setItems] = useState<any[]>([])
   const [purchaseRows, setPurchaseRows] = useState<any[]>(() => [
     { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, price: 0, total: 0 }
   ])
-  const [remarks, setRemarks] = useState("")
+  const [purchaseDate, setPurchaseDate] = useState(() => toDateInput(new Date()))
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [barcodeInput, setBarcodeInput] = useState("")
@@ -189,7 +197,7 @@ export default function PurchasePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          remarks,
+          purchaseDate,
           items: validRows
         })
       })
@@ -199,7 +207,7 @@ export default function PurchasePage() {
       toast.success("Purchase saved successfully!")
       
       setPurchaseRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, price: 0, total: 0 }])
-      setRemarks("")
+      setPurchaseDate(toDateInput(new Date()))
     } catch {
       toast.error("Error saving purchase")
     } finally {
@@ -217,9 +225,20 @@ export default function PurchasePage() {
           </button>
         </div>
 
-        {/* Barcode scan box */}
-        <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', maxWidth: '600px', alignItems: 'center' }}>
+        {/* Purchase date + Barcode scan */}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', maxWidth: '700px', alignItems: 'flex-end' }}>
+          <div style={{ width: '180px', flexShrink: 0 }}>
+            <label className="form-label">{t('purchaseDate')} *</label>
+            <input 
+              type="date" 
+              className="input-field" 
+              value={purchaseDate} 
+              onChange={(e) => setPurchaseDate(e.target.value)} 
+              required 
+            />
+          </div>
           <div style={{ flex: 1 }}>
+            <label className="form-label">{language === 'bn' ? "বারকোড স্ক্যান" : "Barcode Scan"}</label>
             <input 
               ref={barcodeInputRef}
               type="text"
@@ -239,7 +258,7 @@ export default function PurchasePage() {
             type="button" 
             onClick={() => triggerBarcodeMatch(barcodeInput)}
             className="btn btn-primary"
-            style={{ padding: '8px 16px' }}
+            style={{ height: '42px', padding: '0 16px' }}
           >
             Add
           </button>
@@ -339,18 +358,8 @@ export default function PurchasePage() {
             </table>
           </div>
 
-          <div className="totals-grid">
-            <div>
-              <label className="form-label">{t('remarks')} ({t('optional')})</label>
-              <textarea 
-                className="input-field" 
-                rows={3} 
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-6)', borderTop: '1px solid var(--border)', paddingTop: 'var(--space-6)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '320px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1.25rem', fontWeight: 600 }}>
                 <span>{t('grandTotal')}:</span>
                 <span style={{ color: 'var(--primary)' }}>৳ {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

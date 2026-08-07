@@ -85,17 +85,20 @@ model Sale {
 }
 
 model SaleItem {
-  id          Int      @id @default(autoincrement())
-  saleId      Int      @map("sale_id")
-  itemId      Int      @map("item_id")
-  quantity    Int
-  unit        String   @default("pcs")
-  rate        Decimal
-  total       Decimal
-  imeiNumber  String?  @map("imei_number")
-  createdAt   DateTime @default(now()) @map("created_at")
-  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  saleId          Int      @map("sale_id")
+  itemId          Int      @map("item_id")
+  quantity        Int
+  unit            String   @default("pcs")
+  rate            Decimal
+  total           Decimal
+  imeiNumber      String?  @map("imei_number")
+  imeiNumber2     String?  @map("imei_number2")
+  warrantyNumber  Int?     @map("warranty_number")
+  warrantyUnit    String?  @map("warranty_unit") // "day" | "month" | "year"
+  createdAt       DateTime @default(now()) @map("created_at")
+  sale            Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@index([saleId])
   @@index([itemId])

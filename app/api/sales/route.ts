@@ -73,7 +73,11 @@ export async function POST(req: Request) {
       quantity: string
       unit?: string
       rate: string
+      imeiEnabled?: boolean
       imeiNumber?: string
+      imeiNumber2?: string
+      warrantyNumber?: number | string
+      warrantyUnit?: string
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -92,14 +96,21 @@ export async function POST(req: Request) {
           serviceStatus: serviceStatus || "pending",
           ...(saleDateParsed ? { createdAt: saleDateParsed } : {}),
           items: {
-            create: items.map((item: SaleItemInput) => ({
-              itemId: parseInt(item.itemId),
-              quantity: parseInt(item.quantity),
-              unit: item.unit || "pcs",
-              rate: parseFloat(item.rate),
-              total: parseFloat(item.rate) * parseInt(item.quantity),
-              imeiNumber: item.imeiNumber || null
-            }))
+            create: items.map((item: SaleItemInput) => {
+              const wNum = item.warrantyNumber ? parseInt(String(item.warrantyNumber)) : null
+              const imeiOn = !!item.imeiEnabled
+              return {
+                itemId: parseInt(item.itemId),
+                quantity: parseInt(item.quantity),
+                unit: item.unit || "pcs",
+                rate: parseFloat(item.rate),
+                total: parseFloat(item.rate) * parseInt(item.quantity),
+                imeiNumber: imeiOn ? (item.imeiNumber || null) : null,
+                imeiNumber2: imeiOn ? (item.imeiNumber2 || null) : null,
+                warrantyNumber: wNum && wNum > 0 && item.warrantyUnit ? wNum : null,
+                warrantyUnit: wNum && wNum > 0 && item.warrantyUnit ? item.warrantyUnit : null
+              }
+            })
           }
         },
         include: { items: true }

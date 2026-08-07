@@ -106,7 +106,6 @@ export default function ItemsPage() {
     setValue("cost", item.cost)
     setValue("price", item.price)
     setValue("barcode", item.barcode || "")
-    setValue("description", item.description)
   }
 
   const handleDelete = async (id: number) => {
@@ -238,7 +237,7 @@ export default function ItemsPage() {
 
   const resetForm = () => {
     setEditingId(null)
-    reset({ name: "", itemType: "product", cost: "", price: "", barcode: "", description: "" })
+    reset({ name: "", itemType: "product", cost: "", price: "", barcode: "" })
   }
 
   return (
@@ -371,15 +370,6 @@ export default function ItemsPage() {
               className="input-field" 
               placeholder="0.00" 
               onFocus={(e) => e.target.select()}
-            />
-          </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">{t('description')} ({t('optional')})</label>
-            <textarea 
-              {...register("description")} 
-              className="input-field" 
-              rows={2} 
-              placeholder="Additional details..."
             />
           </div>
           

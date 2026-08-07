@@ -8,10 +8,13 @@ import { useLanguage } from "@/components/providers/LanguageProvider"
 
 interface InvoiceItem {
   item?: { name: string }
-  imeiNumber?: string
+  imeiNumber?: string | null
+  imeiNumber2?: string | null
   quantity: number
   rate: number
   total: number
+  warrantyNumber?: number | null
+  warrantyUnit?: string | null
 }
 
 interface Invoice {
@@ -171,8 +174,35 @@ export default function InvoicePrintPage() {
               {invoice.sale?.items.map((item: InvoiceItem, idx: number) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '0.4rem' }}>
-                    <div style={{ fontWeight: 500 }}>{item.item?.name || "Unknown Item"}</div>
-                    {item.imeiNumber && <div style={{ fontSize: '0.65rem', color: '#6b7280', marginTop: '0.1rem' }}>IMEI/SN: {item.imeiNumber}</div>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 500 }}>{item.item?.name || "Unknown Item"}</div>
+                        {(item.imeiNumber || item.imeiNumber2) && (
+                          <div style={{ fontSize: '0.65rem', color: '#6b7280', marginTop: '0.1rem' }}>
+                            IMEI/SN: {[item.imeiNumber, item.imeiNumber2].filter(Boolean).join(' | ')}
+                          </div>
+                        )}
+                      </div>
+                      {item.warrantyNumber && item.warrantyUnit && item.warrantyNumber > 0 && (
+                        <div
+                          style={{
+                            width: '58px', height: '58px', borderRadius: '50%',
+                            border: '2px solid #4f46e5', color: '#4f46e5',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                            justifyContent: 'center', flexShrink: 0, transform: 'rotate(-12deg)',
+                            backgroundColor: 'white'
+                          }}
+                        >
+                          <div style={{ fontSize: '6px', fontWeight: 800, letterSpacing: '0.5px' }}>WARRANTY</div>
+                          <div style={{ fontSize: '17px', fontWeight: 800, lineHeight: 1.1 }}>{item.warrantyNumber}</div>
+                          <div style={{ fontSize: '6px', fontWeight: 800, letterSpacing: '0.5px' }}>
+                            {item.warrantyUnit === 'day' ? (item.warrantyNumber > 1 ? 'DAYS' : 'DAY') :
+                             item.warrantyUnit === 'month' ? (item.warrantyNumber > 1 ? 'MONTHS' : 'MONTH') :
+                             (item.warrantyNumber > 1 ? 'YEARS' : 'YEAR')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '0.4rem', textAlign: 'center' }}>{item.quantity}</td>
                   <td style={{ padding: '0.4rem', textAlign: 'right' }}>{Number(item.rate).toLocaleString()}</td>

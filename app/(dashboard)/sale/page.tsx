@@ -17,7 +17,7 @@ export default function SalePage() {
   const { t, language } = useLanguage()
   const [stockItems, setStockItems] = useState<any[]>([])
   const [saleRows, setSaleRows] = useState<any[]>(() => [
-    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0, isService: false }
+    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiEnabled: false, imeiNumber: "", imeiNumber2: "", maxStock: 0, isService: false, warrantyNumber: 0, warrantyUnit: "" }
   ])
   
   const [saleDate, setSaleDate] = useState(() => toDateInput(new Date()))
@@ -26,7 +26,6 @@ export default function SalePage() {
   const [customerAddress, setCustomerAddress] = useState("")
   const [discount, setDiscount] = useState(0)
   const [tax, setTax] = useState(0)
-  const [remarks, setRemarks] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [generatedInvoiceId, setGeneratedInvoiceId] = useState<number | null>(null)
 
@@ -107,9 +106,13 @@ export default function SalePage() {
           unit: "pcs",
           rate: Number(matchedItem.price) || 0,
           total: Number(matchedItem.price) || 0,
+          imeiEnabled: false,
           imeiNumber: "",
+          imeiNumber2: "",
           maxStock: isService ? 999999 : matchedItem.stock,
-          isService
+          isService,
+          warrantyNumber: 0,
+          warrantyUnit: ""
         }
 
         if (prev.length === 1 && prev[0].itemId === "") {
@@ -199,7 +202,7 @@ export default function SalePage() {
   const addRow = () => {
     setSaleRows([
       ...saleRows,
-      { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0, isService: false }
+    { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiEnabled: false, imeiNumber: "", imeiNumber2: "", maxStock: 0, isService: false, warrantyNumber: 0, warrantyUnit: "" }
     ])
   }
 
@@ -233,7 +236,6 @@ export default function SalePage() {
           customer,
           customerPhone,
           customerAddress,
-          remarks,
           discountAmount: discount,
           taxAmount: tax,
           saleDate,
@@ -259,10 +261,9 @@ export default function SalePage() {
     setCustomer("")
     setCustomerPhone("")
     setCustomerAddress("")
-    setRemarks("")
     setDiscount(0)
     setTax(0)
-    setSaleRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0 }])
+    setSaleRows([{ id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiEnabled: false, imeiNumber: "", imeiNumber2: "", maxStock: 0, warrantyNumber: 0, warrantyUnit: "" }])
     setIsSubmitting(false)
     fetchStock()
   }
@@ -298,16 +299,6 @@ export default function SalePage() {
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
           <h3 style={{ marginBottom: 'var(--space-4)' }}>{t('customerDetails')}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--space-4)' }}>
-            <div>
-              <label className="form-label">{t('saleDate')} *</label>
-              <input 
-                type="date" 
-                className="input-field" 
-                value={saleDate} 
-                onChange={(e) => setSaleDate(e.target.value)} 
-                required 
-              />
-            </div>
             <div>
               <label className="form-label">{t('customerName')} *</label>
               <input 
@@ -345,9 +336,20 @@ export default function SalePage() {
             </button>
           </div>
 
-          {/* Barcode scan box */}
-          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', maxWidth: '600px', alignItems: 'center' }}>
+          {/* Sale date + Barcode scan */}
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', maxWidth: '700px', alignItems: 'flex-end' }}>
+            <div style={{ width: '180px', flexShrink: 0 }}>
+              <label className="form-label">{t('saleDate')} *</label>
+              <input 
+                type="date" 
+                className="input-field" 
+                value={saleDate} 
+                onChange={(e) => setSaleDate(e.target.value)} 
+                required 
+              />
+            </div>
             <div style={{ flex: 1 }}>
+              <label className="form-label">{language === 'bn' ? "বারকোড স্ক্যান" : "Barcode Scan"}</label>
               <input 
                 ref={barcodeInputRef}
                 type="text"
@@ -367,21 +369,39 @@ export default function SalePage() {
               type="button" 
               onClick={() => triggerBarcodeMatch(barcodeInput)}
               className="btn btn-primary"
-              style={{ padding: '8px 16px' }}
+              style={{ height: '42px', padding: '0 16px' }}
             >
               Add
             </button>
           </div>
 
+          <style>{`
+            .sale-table td {
+              vertical-align: top;
+            }
+            .sale-table th {
+              vertical-align: middle;
+            }
+            .sale-table input[type="number"]::-webkit-inner-spin-button,
+            .sale-table input[type="number"]::-webkit-outer-spin-button {
+              -webkit-appearance: none;
+              margin: 0;
+            }
+            .sale-table input[type="number"] {
+              -moz-appearance: textfield;
+              appearance: textfield;
+            }
+          `}</style>
           <div className="table-container">
-            <table className="table mobile-card-table">
+            <table className="table mobile-card-table sale-table">
               <thead>
                 <tr>
                   <th>{t('items')} ({t('availableStock')})</th>
-                  <th style={{ width: '180px' }}>{t('imeiSerial')}</th>
-                  <th style={{ width: '100px' }}>{t('qty')}</th>
-                  <th style={{ width: '150px' }}>{t('rate')} (৳)</th>
-                  <th style={{ width: '150px' }}>{t('total')} (৳)</th>
+                  <th style={{ width: '80px' }}>{t('qty')}</th>
+                  <th style={{ width: '110px' }}>{t('rate')} (৳)</th>
+                  <th style={{ width: '80px' }}>{language === 'bn' ? "ওয়ারেন্টি" : "Warranty"}</th>
+                  <th style={{ width: '90px' }}>{language === 'bn' ? "মেয়াদ" : "Period"}</th>
+                  <th style={{ width: '110px' }}>{t('total')} (৳)</th>
                   <th style={{ width: '50px' }}></th>
                 </tr>
               </thead>
@@ -402,16 +422,36 @@ export default function SalePage() {
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td data-label={t('imeiSerial')}>
-                      <input 
-                        type="text" 
-                        className="input-field" 
-                        value={row.imeiNumber}
-                        onChange={(e) => handleRowChange(row.id, 'imeiNumber', e.target.value)}
-                        placeholder={t('imeiSerial')}
-                        onFocus={(e) => e.target.select()}
-                      />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={!!row.imeiEnabled}
+                          onChange={(e) => handleRowChange(row.id, 'imeiEnabled', e.target.checked)}
+                        />
+                        <span>{t('imeiSerial')}</span>
+                      </label>
+                      {row.imeiEnabled && (
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                          <input 
+                            type="text" 
+                            className="input-field" 
+                            style={{ height: '34px', padding: '0 var(--space-2)', fontSize: '0.8rem' }}
+                            value={row.imeiNumber}
+                            onChange={(e) => handleRowChange(row.id, 'imeiNumber', e.target.value)}
+                            placeholder={`IMEI 1`}
+                            onFocus={(e) => e.target.select()}
+                          />
+                          <input 
+                            type="text" 
+                            className="input-field" 
+                            style={{ height: '34px', padding: '0 var(--space-2)', fontSize: '0.8rem' }}
+                            value={row.imeiNumber2}
+                            onChange={(e) => handleRowChange(row.id, 'imeiNumber2', e.target.value)}
+                            placeholder={`IMEI 2`}
+                            onFocus={(e) => e.target.select()}
+                          />
+                        </div>
+                      )}
                     </td>
                     <td data-label={t('qty')}>
                       <input 
@@ -436,6 +476,30 @@ export default function SalePage() {
                         required
                       />
                     </td>
+                    <td data-label={language === 'bn' ? "ওয়ারেন্টি" : "Warranty"}>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="input-field" 
+                        value={row.warrantyNumber === 0 ? "" : row.warrantyNumber}
+                        placeholder="0"
+                        onChange={(e) => handleRowChange(row.id, 'warrantyNumber', Math.max(0, Number(e.target.value) || 0))}
+                        onFocus={(e) => e.target.select()}
+                      />
+                    </td>
+                    <td data-label={language === 'bn' ? "মেয়াদ" : "Period"}>
+                      <select 
+                        className="input-field" 
+                        value={row.warrantyUnit}
+                        onChange={(e) => handleRowChange(row.id, 'warrantyUnit', e.target.value)}
+                        style={{ appearance: 'none', WebkitAppearance: 'none', display: 'block', textAlign: 'center', padding: '0' }}
+                      >
+                        <option value="">-</option>
+                        <option value="day">{language === 'bn' ? "দিন" : "Day"}</option>
+                        <option value="month">{language === 'bn' ? "মাস" : "Month"}</option>
+                        <option value="year">{language === 'bn' ? "বছর" : "Year"}</option>
+                      </select>
+                    </td>
                     <td data-label={`${t('total')} (৳)`}>
                       <div className="input-field" style={{ backgroundColor: 'var(--surface-hover)', fontWeight: 500 }}>
                         {row.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -459,13 +523,10 @@ export default function SalePage() {
 
           <div className="totals-grid">
             <div>
-              <label className="form-label">{t('remarks')}</label>
-              <textarea 
-                className="input-field" 
-                rows={4} 
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-              />
+              {/* Warranty info hint */}
+              <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                {language === 'bn' ? "প্রতিটি আইটেমের জন্য ওয়ারেন্টি সংখ্যা ও মেয়াদ নির্বাচন করুন (ঐচ্ছিক)" : "Set warranty number and period per item (optional)"}
+              </p>
             </div>
 
             <div className="totals-panel">
