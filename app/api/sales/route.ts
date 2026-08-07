@@ -4,6 +4,14 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 
+// Parse "YYYY-MM-DD" as local time (avoid UTC off-by-one)
+function parseLocalDate(s?: string) {
+  if (!s) return null
+  const [y, m, d] = s.split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session) {
@@ -52,7 +60,8 @@ export async function POST(req: Request) {
       isServiceJob,
       deviceModel,
       problemDesc,
-      serviceStatus
+      serviceStatus,
+      saleDate
     } = body
 
     if (!items || !items.length) {
@@ -68,6 +77,8 @@ export async function POST(req: Request) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      const saleDateParsed = parseLocalDate(saleDate)
+
       // 1. Create Sale
       const sale = await tx.sale.create({
         data: {
@@ -79,6 +90,7 @@ export async function POST(req: Request) {
           deviceModel: deviceModel || null,
           problemDesc: problemDesc || null,
           serviceStatus: serviceStatus || "pending",
+          ...(saleDateParsed ? { createdAt: saleDateParsed } : {}),
           items: {
             create: items.map((item: SaleItemInput) => ({
               itemId: parseInt(item.itemId),
@@ -134,7 +146,8 @@ export async function POST(req: Request) {
           discountAmount: dAmount,
           taxAmount: tAmount,
           totalAmount,
-          paymentStatus: "paid"
+          paymentStatus: "paid",
+          ...(saleDateParsed ? { createdAt: saleDateParsed } : {})
         }
       })
 

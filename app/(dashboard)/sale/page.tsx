@@ -5,6 +5,14 @@ import { toast } from "sonner"
 import { Trash2, Plus, Save, FileText } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
 
+// Local-time date input value (avoid UTC toISOString off-by-one)
+function toDateInput(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export default function SalePage() {
   const { t, language } = useLanguage()
   const [stockItems, setStockItems] = useState<any[]>([])
@@ -12,6 +20,7 @@ export default function SalePage() {
     { id: Date.now(), itemId: "", quantity: 1, unit: "pcs", rate: 0, total: 0, imeiNumber: "", maxStock: 0, isService: false }
   ])
   
+  const [saleDate, setSaleDate] = useState(() => toDateInput(new Date()))
   const [customer, setCustomer] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
@@ -227,6 +236,7 @@ export default function SalePage() {
           remarks,
           discountAmount: discount,
           taxAmount: tax,
+          saleDate,
           items: validRows
         })
       })
@@ -245,6 +255,7 @@ export default function SalePage() {
 
   const startNewSale = () => {
     setGeneratedInvoiceId(null)
+    setSaleDate(toDateInput(new Date()))
     setCustomer("")
     setCustomerPhone("")
     setCustomerAddress("")
@@ -287,6 +298,16 @@ export default function SalePage() {
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
           <h3 style={{ marginBottom: 'var(--space-4)' }}>{t('customerDetails')}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--space-4)' }}>
+            <div>
+              <label className="form-label">{t('saleDate')} *</label>
+              <input 
+                type="date" 
+                className="input-field" 
+                value={saleDate} 
+                onChange={(e) => setSaleDate(e.target.value)} 
+                required 
+              />
+            </div>
             <div>
               <label className="form-label">{t('customerName')} *</label>
               <input 

@@ -46,6 +46,7 @@ export const translations = {
     // Sale Page
     customerDetails: "Customer Details",
     customerName: "Customer Name",
+    saleDate: "Sale Date",
     phoneNumber: "Phone Number",
     address: "Address",
     saleItems: "Sale Items",
@@ -199,6 +200,7 @@ export const translations = {
     // Sale Page
     customerDetails: "ক্রেতার তথ্য",
     customerName: "ক্রেতার নাম",
+    saleDate: "বিক্রয়ের তারিখ",
     phoneNumber: "ফোন নম্বর",
     address: "ঠিকানা",
     saleItems: "বিক্রয় আইটেম",
