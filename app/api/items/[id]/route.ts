@@ -56,6 +56,18 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id: itemId } = await params
     const id = parseInt(itemId)
     
+    const [salesCount, purchaseCount] = await Promise.all([
+      prisma.saleItem.count({ where: { itemId: id } }),
+      prisma.purchaseItem.count({ where: { itemId: id } })
+    ])
+
+    if (salesCount > 0 || purchaseCount > 0) {
+      return NextResponse.json(
+        { error: "Cannot delete item. It is linked to existing sales or purchases." },
+        { status: 400 }
+      )
+    }
+
     await prisma.item.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error) {

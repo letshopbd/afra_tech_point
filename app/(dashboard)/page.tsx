@@ -29,13 +29,15 @@ async function getDashboardData() {
   let totalSalesRevenue = 0
 
   recentSalesItems.forEach(si => {
-    const current = itemSalesMap.get(si.itemId) || { name: si.item.name, qty: 0, revenue: 0, cost: 0 }
+    const itemName = si.item?.name || ('Item #' + si.itemId)
+    const itemCost = Number(si.item?.cost || 0)
+    const current = itemSalesMap.get(si.itemId) || { name: itemName, qty: 0, revenue: 0, cost: 0 }
     current.qty += si.quantity
     current.revenue += Number(si.total)
-    current.cost += si.quantity * Number(si.item.cost)
+    current.cost += si.quantity * itemCost
     itemSalesMap.set(si.itemId, current)
     totalSalesRevenue += Number(si.total)
-    estimatedProfit += (Number(si.total) - (si.quantity * Number(si.item.cost)))
+    estimatedProfit += (Number(si.total) - (si.quantity * itemCost))
   })
 
   const topItems = Array.from(itemSalesMap.values())
@@ -47,10 +49,11 @@ async function getDashboardData() {
   const profitByDay = new Map()
 
   recentSalesItems.forEach(si => {
-    const dateStr = si.createdAt.toISOString().split('T')[0]
+    const dateStr = new Date(si.createdAt).toISOString().split('T')[0]
     salesByDay.set(dateStr, (salesByDay.get(dateStr) || 0) + Number(si.total))
     
-    const profit = Number(si.total) - (si.quantity * Number(si.item.cost))
+    const itemCost = Number(si.item?.cost || 0)
+    const profit = Number(si.total) - (si.quantity * itemCost)
     profitByDay.set(dateStr, (profitByDay.get(dateStr) || 0) + profit)
   })
 
@@ -72,7 +75,21 @@ async function getDashboardData() {
 }
 
 export default async function DashboardPage() {
-  const data = await getDashboardData()
-  
-  return <DashboardClient data={data} />
+  try {
+    const data = await getDashboardData()
+    return <DashboardClient data={data} />
+  } catch (error) {
+    console.error("Dashboard data load error:", error)
+    return (
+      <DashboardClient
+        data={{
+          totalInvestment: 0,
+          totalSalesRevenue: 0,
+          estimatedProfit: 0,
+          topItems: [],
+          chartData: [],
+        }}
+      />
+    )
+  }
 }
