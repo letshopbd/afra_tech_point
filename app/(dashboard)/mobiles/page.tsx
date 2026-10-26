@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Smartphone, CheckCircle, XCircle, Search } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
+import { formatMemory } from "@/lib/utils"
 
 interface MobilePhone {
   id: number
@@ -441,7 +442,6 @@ export default function MobilesPage() {
                   <th>{t('ram')}/{t('rom')}</th>
                   <th>{t('imei1')}</th>
                   <th>{t('imei2')}</th>
-                  <th>{t('purchaseRate')}</th>
                   <th>{t('saleRate')}</th>
                   <th>{t('warrantyLabel')}</th>
                   <th>{language === 'bn' ? "স্ট্যাটাস" : "Status"}</th>
@@ -459,7 +459,7 @@ export default function MobilesPage() {
                     <td data-label={t('color')}>{phone.color || <span className="text-muted">—</span>}</td>
                     <td data-label={`${t('ram')}/${t('rom')}`}>
                       {phone.ram || phone.rom
-                        ? <span>{phone.ram || '—'} / {phone.rom || '—'}</span>
+                        ? <span>{phone.ram ? formatMemory(phone.ram) : '—'} / {phone.rom ? formatMemory(phone.rom) : '—'}</span>
                         : <span className="text-muted">—</span>
                       }
                     </td>
@@ -472,7 +472,6 @@ export default function MobilesPage() {
                         : <span className="text-muted">—</span>
                       }
                     </td>
-                    <td data-label={t('purchaseRate')}>৳{Number(phone.purchasePrice).toLocaleString()}</td>
                     <td data-label={t('saleRate')}>৳{Number(phone.salePrice).toLocaleString()}</td>
                     <td data-label={t('warrantyLabel')}>
                       {phone.hasWarranty && phone.warrantyDays

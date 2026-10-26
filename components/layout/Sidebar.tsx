@@ -81,7 +81,11 @@ export default function Sidebar() {
             <div className="sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {group.items.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href))
+                const isActive = pathname === item.href || (
+                  item.href !== "/" && 
+                  item.href !== "/mobiles" && 
+                  pathname?.startsWith(item.href + "/")
+                )
                 
                 return (
                   <Link 

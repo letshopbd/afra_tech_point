@@ -16,6 +16,9 @@ export default function Topbar() {
   // Format pathname to a readable title
   const getPageTitle = () => {
     if (pathname === "/") return t('dashboard')
+    if (pathname === "/mobiles/sell") return t('mobileSale')
+    if (pathname === "/mobiles/records") return t('mobileRecords')
+    if (pathname === "/mobiles") return t('mobilePhones')
     const path = pathname?.split("/")[1] || ""
     const keyMap: Record<string, keyof typeof translations['en']> = {
       'items': 'items',

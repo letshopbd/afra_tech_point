@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { FileText, Plus, Save, Smartphone } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
+import { formatMemory } from "@/lib/utils"
 
 interface MobilePhone {
   id: number
@@ -207,6 +208,8 @@ export default function MobileSellPage() {
                 <option key={phone.id} value={phone.id}>
                   {phone.brand} {phone.model}
                   {phone.color ? ` — ${phone.color}` : ''}
+                  {phone.ram ? ` | ${formatMemory(phone.ram)}` : ''}
+                  {phone.rom ? `/${formatMemory(phone.rom)}` : ''}
                   {` — IMEI: ${phone.imei1}`}
                 </option>
               ))}
@@ -243,13 +246,13 @@ export default function MobileSellPage() {
               {selectedPhone.ram && (
                 <div>
                   <div className="text-muted" style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('ram')}</div>
-                  <div style={{ fontWeight: 500 }}>{selectedPhone.ram}</div>
+                  <div style={{ fontWeight: 500 }}>{formatMemory(selectedPhone.ram)}</div>
                 </div>
               )}
               {selectedPhone.rom && (
                 <div>
                   <div className="text-muted" style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('rom')}</div>
-                  <div style={{ fontWeight: 500 }}>{selectedPhone.rom}</div>
+                  <div style={{ fontWeight: 500 }}>{formatMemory(selectedPhone.rom)}</div>
                 </div>
               )}
               <div>

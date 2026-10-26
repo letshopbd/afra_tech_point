@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { formatMemory } from "@/lib/utils"
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
@@ -73,8 +74,8 @@ export async function POST(req: Request) {
         brand,
         model,
         color: color || null,
-        ram: ram || null,
-        rom: rom || null,
+        ram: ram ? formatMemory(ram) : null,
+        rom: rom ? formatMemory(rom) : null,
         imei1,
         imei2: imei2 || null,
         purchasePrice: purchasePrice ? parseFloat(purchasePrice) : 0,

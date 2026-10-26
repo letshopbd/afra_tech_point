@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import { Printer } from "lucide-react"
 import { useLanguage } from "@/components/providers/LanguageProvider"
+import { formatMemory } from "@/lib/utils"
 
 interface MobilePhone {
   id: number
@@ -213,13 +214,13 @@ export default function MobileInvoicePage() {
               {sale.mobile.ram && (
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>{t('ram')}:</span>
-                  <span style={{ fontWeight: 500, fontSize: '0.8rem' }}>{sale.mobile.ram}</span>
+                  <span style={{ fontWeight: 500, fontSize: '0.8rem' }}>{formatMemory(sale.mobile.ram)}</span>
                 </div>
               )}
               {sale.mobile.rom && (
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>{t('rom')}:</span>
-                  <span style={{ fontWeight: 500, fontSize: '0.8rem' }}>{sale.mobile.rom}</span>
+                  <span style={{ fontWeight: 500, fontSize: '0.8rem' }}>{formatMemory(sale.mobile.rom)}</span>
                 </div>
               )}
               <div style={{ display: 'flex', gap: '0.4rem' }}>
