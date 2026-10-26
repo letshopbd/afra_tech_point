@@ -1,9 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['192.168.10.241', 'localhost'],
+  allowedDevOrigins: ['localhost', '127.0.0.1', '192.168.0.109', '192.168.10.241'],
   async headers() {
     return [
+      {
+        source: '/((?!_next/static|_next/image|favicon.ico|logo.png|icon.png).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
       {
         source: '/(.*)',
         headers: [
