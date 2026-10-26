@@ -161,3 +161,46 @@ model Settings {
 
   @@map("settings")
 }
+
+model MobilePhone {
+  id            Int         @id @default(autoincrement())
+  brand         String
+  model         String
+  color         String?
+  ram           String?
+  rom           String?
+  imei1         String      @unique
+  imei2         String?     @unique
+  purchasePrice Decimal     @default(0.00) @map("purchase_price")
+  salePrice     Decimal     @default(0.00) @map("sale_price")
+  hasWarranty   Boolean     @default(false) @map("has_warranty")
+  warrantyDays  Int?        @map("warranty_days")
+  status        String      @default("available")
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  mobileSale    MobileSale?
+
+  @@index([status])
+  @@map("mobile_phones")
+}
+
+model MobileSale {
+  id              Int         @id @default(autoincrement())
+  invoiceNumber   String      @unique @map("invoice_number")
+  mobileId        Int         @unique @map("mobile_id")
+  customer        String
+  customerPhone   String?     @map("customer_phone")
+  customerAddress String?     @map("customer_address")
+  salePrice       Decimal     @map("sale_price")
+  discountAmount  Decimal     @default(0.00) @map("discount_amount")
+  totalAmount     Decimal     @map("total_amount")
+  notes           String?
+  saleDate        DateTime    @default(now()) @map("sale_date")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  mobile          MobilePhone @relation(fields: [mobileId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("mobile_sales")
+}

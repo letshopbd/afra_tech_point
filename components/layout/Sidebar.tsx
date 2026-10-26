@@ -16,6 +16,9 @@ import {
   LineChart, 
   Settings,
   Barcode,
+  Smartphone,
+  ShoppingBag,
+  ClipboardList,
 } from "lucide-react"
 
 export default function Sidebar() {
@@ -33,6 +36,14 @@ export default function Sidebar() {
         { href: "/sale", label: t('sale'), icon: Tag },
         { href: "/service", label: t('service') || "Service Job", icon: Wrench },
         { href: "/stock", label: t('stock'), icon: BarChart2 },
+      ]
+    },
+    {
+      title: language === 'bn' ? "মোবাইল ম্যানেজমেন্ট" : "MOBILE MANAGEMENT",
+      items: [
+        { href: "/mobiles", label: t('mobilePhones'), icon: Smartphone },
+        { href: "/mobiles/sell", label: t('mobileSale'), icon: ShoppingBag },
+        { href: "/mobiles/records", label: t('mobileRecords'), icon: ClipboardList },
       ]
     },
     {

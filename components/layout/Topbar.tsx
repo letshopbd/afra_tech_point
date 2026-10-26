@@ -26,7 +26,8 @@ export default function Topbar() {
       'statement': 'statement',
       'settings': 'settings',
       'manage': 'manageRecords',
-      'barcode': 'barcodePrinter'
+      'barcode': 'barcodePrinter',
+      'mobiles': 'mobilePhones'
     }
     const key = keyMap[path]
     return key ? t(key) : path
