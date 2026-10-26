@@ -175,6 +175,7 @@ model MobilePhone {
   salePrice     Decimal     @default(0.00) @map("sale_price")
   hasWarranty   Boolean     @default(false) @map("has_warranty")
   warrantyDays  Int?        @map("warranty_days")
+  warrantyUnit  String?     @default("day") @map("warranty_unit") // "day" | "month" | "year"
   status        String      @default("available")
   notes         String?
   createdAt     DateTime    @default(now()) @map("created_at")

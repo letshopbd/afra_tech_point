@@ -19,6 +19,7 @@ interface MobilePhone {
   salePrice: number
   hasWarranty: boolean
   warrantyDays?: number | null
+  warrantyUnit?: string | null
   status: string
   notes?: string | null
   createdAt: string
@@ -37,7 +38,21 @@ interface FormData {
   salePrice: string
   hasWarranty: boolean
   warrantyDays: string
+  warrantyUnit: string
   notes: string
+}
+
+function formatWarranty(val?: number | null, unit?: string | null, lang: string = 'en') {
+  if (!val) return null
+  const u = (unit || 'day').toLowerCase()
+  if (lang === 'bn') {
+    if (u === 'year') return `${val} বছর`
+    if (u === 'month') return `${val} মাস`
+    return `${val} দিন`
+  }
+  if (u === 'year') return `${val} ${val === 1 ? 'Year' : 'Years'}`
+  if (u === 'month') return `${val} ${val === 1 ? 'Month' : 'Months'}`
+  return `${val} ${val === 1 ? 'Day' : 'Days'}`
 }
 
 export default function MobilesPage() {
@@ -62,6 +77,7 @@ export default function MobilesPage() {
       salePrice: "",
       hasWarranty: false,
       warrantyDays: "",
+      warrantyUnit: "day",
       notes: ""
     }
   })
@@ -97,7 +113,8 @@ export default function MobilesPage() {
         body: JSON.stringify({
           ...data,
           hasWarranty: !!data.hasWarranty,
-          warrantyDays: data.hasWarranty && data.warrantyDays ? parseInt(data.warrantyDays) : null
+          warrantyDays: data.hasWarranty && data.warrantyDays ? parseInt(data.warrantyDays) : null,
+          warrantyUnit: data.hasWarranty ? (data.warrantyUnit || "day") : null
         })
       })
 
@@ -133,6 +150,7 @@ export default function MobilesPage() {
     setValue("salePrice", String(phone.salePrice))
     setValue("hasWarranty", phone.hasWarranty)
     setValue("warrantyDays", phone.warrantyDays ? String(phone.warrantyDays) : "")
+    setValue("warrantyUnit", phone.warrantyUnit || "day")
     setValue("notes", phone.notes || "")
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -338,17 +356,29 @@ export default function MobilesPage() {
                 </label>
               </div>
 
-              {/* Warranty Days */}
+              {/* Warranty Days & Unit */}
               {hasWarranty && (
                 <div>
-                  <label className="form-label">{t('warrantyDays')}</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="input-field"
-                    placeholder={language === 'bn' ? "যেমন: ৩৬৫" : "e.g. 365"}
-                    {...register("warrantyDays")}
-                  />
+                  <label className="form-label">{t('warrantyPeriod')}</label>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      className="input-field"
+                      style={{ flex: 1 }}
+                      placeholder={language === 'bn' ? "যেমন: ১" : "e.g. 1"}
+                      {...register("warrantyDays")}
+                    />
+                    <select
+                      className="input-field"
+                      style={{ width: '100px' }}
+                      {...register("warrantyUnit")}
+                    >
+                      <option value="day">{language === 'bn' ? "দিন" : "Day"}</option>
+                      <option value="month">{language === 'bn' ? "মাস" : "Month"}</option>
+                      <option value="year">{language === 'bn' ? "বছর" : "Year"}</option>
+                    </select>
+                  </div>
                 </div>
               )}
             </div>
@@ -446,7 +476,7 @@ export default function MobilesPage() {
                     <td data-label={t('saleRate')}>৳{Number(phone.salePrice).toLocaleString()}</td>
                     <td data-label={t('warrantyLabel')}>
                       {phone.hasWarranty && phone.warrantyDays
-                        ? <span style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600 }}>{phone.warrantyDays} {t('days')}</span>
+                        ? <span style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600 }}>{formatWarranty(phone.warrantyDays, phone.warrantyUnit, language)}</span>
                         : <span className="text-muted" style={{ fontSize: '0.8rem' }}>{t('noWarranty')}</span>
                       }
                     </td>

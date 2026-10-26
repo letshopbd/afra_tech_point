@@ -31,6 +31,7 @@ async function main() {
       "sale_price" DECIMAL(10,2) NOT NULL DEFAULT 0.00,
       "has_warranty" INTEGER NOT NULL DEFAULT 0,
       "warranty_days" INTEGER,
+      "warranty_unit" TEXT DEFAULT 'day',
       "status" TEXT NOT NULL DEFAULT 'available',
       "notes" TEXT,
       "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -66,6 +67,16 @@ async function main() {
     } catch (err) {
       console.error(`❌ Error executing statement:`, err.message);
       console.error('SQL:', sql.substring(0, 100) + '...');
+    }
+  }
+
+  // Ensure warranty_unit column exists in case table was created earlier
+  try {
+    await client.execute(`ALTER TABLE "mobile_phones" ADD COLUMN "warranty_unit" TEXT DEFAULT 'day'`);
+    console.log(`✅ Added column: warranty_unit`);
+  } catch (err) {
+    if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
+      console.log(`ℹ️ Column warranty_unit: ${err.message}`);
     }
   }
 

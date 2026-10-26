@@ -35,6 +35,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       salePrice,
       hasWarranty,
       warrantyDays,
+      warrantyUnit,
       notes
     } = body
 
@@ -72,6 +73,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         salePrice: salePrice ? parseFloat(salePrice) : 0,
         hasWarranty: !!hasWarranty,
         warrantyDays: hasWarranty && warrantyDays ? parseInt(warrantyDays) : null,
+        warrantyUnit: hasWarranty ? (warrantyUnit || 'day') : null,
         notes: notes || null,
         // Do not update status if already sold
         ...(existing.status !== 'sold' ? {} : {})

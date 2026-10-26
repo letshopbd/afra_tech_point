@@ -18,6 +18,7 @@ interface MobilePhone {
   salePrice: number
   hasWarranty: boolean
   warrantyDays?: number | null
+  warrantyUnit?: string | null
   status: string
 }
 
@@ -27,6 +28,19 @@ function toDateInput(d: Date) {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function formatWarranty(val?: number | null, unit?: string | null, lang: string = 'en') {
+  if (!val) return null
+  const u = (unit || 'day').toLowerCase()
+  if (lang === 'bn') {
+    if (u === 'year') return `${val} বছর`
+    if (u === 'month') return `${val} মাস`
+    return `${val} দিন`
+  }
+  if (u === 'year') return `${val} ${val === 1 ? 'Year' : 'Years'}`
+  if (u === 'month') return `${val} ${val === 1 ? 'Month' : 'Months'}`
+  return `${val} ${val === 1 ? 'Day' : 'Days'}`
 }
 
 export default function MobileSellPage() {
@@ -252,7 +266,7 @@ export default function MobileSellPage() {
                 <div className="text-muted" style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('warrantyLabel')}</div>
                 <div style={{ fontWeight: 500, color: selectedPhone.hasWarranty ? 'var(--primary)' : undefined }}>
                   {selectedPhone.hasWarranty && selectedPhone.warrantyDays
-                    ? `${selectedPhone.warrantyDays} ${t('days')}`
+                    ? formatWarranty(selectedPhone.warrantyDays, selectedPhone.warrantyUnit, language)
                     : t('noWarranty')
                   }
                 </div>

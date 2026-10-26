@@ -46,6 +46,7 @@ export async function POST(req: Request) {
       salePrice,
       hasWarranty,
       warrantyDays,
+      warrantyUnit,
       notes
     } = body
 
@@ -80,6 +81,7 @@ export async function POST(req: Request) {
         salePrice: salePrice ? parseFloat(salePrice) : 0,
         hasWarranty: !!hasWarranty,
         warrantyDays: hasWarranty && warrantyDays ? parseInt(warrantyDays) : null,
+        warrantyUnit: hasWarranty ? (warrantyUnit || 'day') : null,
         notes: notes || null,
         status: 'available'
       }

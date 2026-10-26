@@ -17,6 +17,7 @@ interface MobilePhone {
   imei2?: string | null
   hasWarranty: boolean
   warrantyDays?: number | null
+  warrantyUnit?: string | null
 }
 
 interface MobileSale {
@@ -38,6 +39,26 @@ interface Settings {
   invoiceCompanyName?: string
   invoiceCompanyAddress?: string
   invoicePhone?: string
+}
+
+function getWarrantyBadgeUnit(val?: number | null, unit?: string | null) {
+  const u = (unit || 'day').toLowerCase()
+  if (u === 'year') return val === 1 ? 'YEAR' : 'YEARS'
+  if (u === 'month') return val === 1 ? 'MONTH' : 'MONTHS'
+  return val === 1 ? 'DAY' : 'DAYS'
+}
+
+function formatWarranty(val?: number | null, unit?: string | null, lang: string = 'en') {
+  if (!val) return null
+  const u = (unit || 'day').toLowerCase()
+  if (lang === 'bn') {
+    if (u === 'year') return `${val} বছর`
+    if (u === 'month') return `${val} মাস`
+    return `${val} দিন`
+  }
+  if (u === 'year') return `${val} ${val === 1 ? 'Year' : 'Years'}`
+  if (u === 'month') return `${val} ${val === 1 ? 'Month' : 'Months'}`
+  return `${val} ${val === 1 ? 'Day' : 'Days'}`
 }
 
 export default function MobileInvoicePage() {
@@ -201,6 +222,14 @@ export default function MobileInvoicePage() {
                   <span style={{ fontWeight: 500, fontSize: '0.8rem' }}>{sale.mobile.rom}</span>
                 </div>
               )}
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>{t('warrantyLabel')}:</span>
+                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: sale.mobile.hasWarranty ? '#4f46e5' : '#6b7280' }}>
+                  {sale.mobile.hasWarranty && sale.mobile.warrantyDays
+                    ? formatWarranty(sale.mobile.warrantyDays, sale.mobile.warrantyUnit, language)
+                    : t('noWarranty')}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -240,7 +269,7 @@ export default function MobileInvoicePage() {
                 >
                   <div style={{ fontSize: '6px', fontWeight: 800, letterSpacing: '0.5px' }}>WARRANTY</div>
                   <div style={{ fontSize: '20px', fontWeight: 800, lineHeight: 1.1 }}>{sale.mobile.warrantyDays}</div>
-                  <div style={{ fontSize: '6px', fontWeight: 800, letterSpacing: '0.5px' }}>DAYS</div>
+                  <div style={{ fontSize: '6px', fontWeight: 800, letterSpacing: '0.5px' }}>{getWarrantyBadgeUnit(sale.mobile.warrantyDays, sale.mobile.warrantyUnit)}</div>
                 </div>
               ) : (
                 <div
